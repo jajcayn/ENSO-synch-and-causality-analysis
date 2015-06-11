@@ -144,7 +144,7 @@ for i in range(NUM_SURR):
 for i in range(WRKRS):
     jobq.put(None)
 
-wrkrs = [Process(target=_mi_surrs, args = (enso_sg, a, scales, phaseAnn, jobq, resq))]
+wrkrs = [Process(target=_mi_surrs, args = (enso_sg, a, scales, phaseAnn, jobq, resq)) for i in range(WRKRS)]
 for w in wrkrs:
     w.start()
 

@@ -12,6 +12,7 @@ from surrogates import SurrogateField
 import cPickle
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
+from matplotlib.ticker import MultipleLocator, FuncFormatter
 
 def load_enso_SSTs():
     # load enso SSTs
@@ -48,112 +49,154 @@ def phase_diff(ph1, ph2):
 WVLT_SPAN = [5,93] # unit is month
 NUM_SURR = 1000
 WRKRS = 20
-SAVE = True
+COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
+
+if COMPUTE:
+    enso = load_enso_SSTs()
+
+    ## DATA
+    # prepare result matrices
+    k0 = 6. # wavenumber of Morlet wavelet used in analysis
+    y = 12 # year in months
+    fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + np.power(k0,2)))
+    scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
+    phase_phase_coherence = np.zeros((scales.shape[0], scales.shape[0]))
+    phase_phase_CMI = np.zeros_like(phase_phase_coherence)
+
+    for i in range(phase_phase_coherence.shape[0]):
+        sc_i = scales[i] / fourier_factor
+        wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+        phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+        
+        for j in range(phase_phase_coherence.shape[1]):
+            sc_j = scales[j] / fourier_factor
+            wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+            phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+
+            phase_phase_coherence[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = 8)
+
+            # conditional mutual inf -- avg over lags 1 - 6 months
+            CMI = []
+            for tau in range(1, 6):
+                CMI.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
+                    phase_j[:-tau], algorithm = 'EQQ2', bins = 8))
+            phase_phase_CMI[i, j] = np.mean(np.array(CMI))
+
+    print("[%s] Analysis on data done." % str(datetime.now()))
 
 
-enso = load_enso_SSTs()
+    def _coh_cmi_surrs(sg, a, sc, jobq, resq):
+        mean, var, _ = a
+        while jobq.get() is not None:
+            sg.construct_fourier_surrogates_spatial()
+            sg.add_seasonality(mean, var, None)
 
-## DATA
-# prepare result matrices
-k0 = 6. # wavenumber of Morlet wavelet used in analysis
-y = 12 # year in months
-fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + np.power(k0,2)))
-scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
-phase_phase_coherence = np.zeros((scales.shape[0], scales.shape[0]))
-phase_phase_CMI = np.zeros_like(phase_phase_coherence)
+            coh = np.zeros((sc.shape[0], sc.shape[0]))
+            cmi = np.zeros_like(phase_phase_coherence)
 
-for i in range(phase_phase_coherence.shape[0]):
-    sc_i = scales[i] / fourier_factor
-    wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
-    phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
-    
-    for j in range(phase_phase_coherence.shape[1]):
-        sc_j = scales[j] / fourier_factor
-        wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
-        phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+            for i in range(coh.shape[0]):
+                sc_i = sc[i] / fourier_factor
+                wave, _, _, _ = wavelet_analysis.continous_wavelet(sg.surr_data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+                
+                for j in range(coh.shape[1]):
+                    sc_j = sc[j] / fourier_factor
+                    wave, _, _, _ = wavelet_analysis.continous_wavelet(sg.surr_data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                    phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
 
-        phase_phase_coherence[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = 8)
+                    coh[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = 8)
 
-        # conditional mutual inf -- avg over lags 1 - 6 months
-        CMI = []
-        for tau in range(1, 6):
-            CMI.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
-                phase_j[:-tau], algorithm = 'EQQ2', bins = 8))
-        phase_phase_CMI[i, j] = np.mean(np.array(CMI))
+                    # conditional mutual inf -- avg over lags 1 - 6 months
+                    CMI_temp = []
+                    for tau in range(1, 6):
+                        CMI_temp.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
+                            phase_j[:-tau], algorithm = 'EQQ2', bins = 8))
+                    cmi[i, j] = np.mean(np.array(CMI_temp))
 
-print("[%s] Analysis on data done." % str(datetime.now()))
+            resq.put((coh, cmi))
 
 
-def _coh_cmi_surrs(sg, a, sc, jobq, resq):
-    mean, var, _ = a
-    while jobq.get() is not None:
-        sg.construct_fourier_surrogates_spatial()
-        sg.add_seasonality(mean, var, None)
+    ## SURROGATES
+    if NUM_SURR > 0:
+        print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
+        a = enso.get_seasonality(DETREND = False)
+        enso_sg = SurrogateField()
+        enso_sg.copy_field(enso)
 
-        coh = np.zeros((sc.shape[0], sc.shape[0]))
-        cmi = np.zeros_like(phase_phase_coherence)
+        surr_completed = 0
+        surrCoherence = np.zeros(([NUM_SURR] + list(phase_phase_coherence.shape)))
+        surrCMI = np.zeros_like(surrCoherence)
+        jobq = Queue()
+        resq = Queue()
+        for i in range(NUM_SURR):
+            jobq.put(1)
+        for i in range(WRKRS):
+            jobq.put(None)
 
-        for i in range(coh.shape[0]):
-            sc_i = sc[i] / fourier_factor
-            wave, _, _, _ = wavelet_analysis.continous_wavelet(sg.surr_data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
-            phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
-            
-            for j in range(coh.shape[1]):
-                sc_j = sc[j] / fourier_factor
-                wave, _, _, _ = wavelet_analysis.continous_wavelet(sg.surr_data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
-                phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+        wrkrs = [Process(target=_coh_cmi_surrs, args = (enso_sg, a, scales, jobq, resq)) for i in range(WRKRS)]
+        for w in wrkrs:
+            w.start()
 
-                coh[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = 8)
+        while surr_completed < NUM_SURR:
+            coh, cmi = resq.get()
+            surrCoherence[surr_completed, :, :] = coh
+            surrCMI[surr_completed, :, :] = cmi
+            surr_completed += 1
 
-                # conditional mutual inf -- avg over lags 1 - 6 months
-                CMI_temp = []
-                for tau in range(1, 6):
-                    CMI_temp.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
-                        phase_j[:-tau], algorithm = 'EQQ2', bins = 8))
-                cmi[i, j] = np.mean(np.array(CMI_temp))
+            if surr_completed % 20 == 0:
+                print("..%d/%d surrogate done.." % (surr_completed, NUM_SURR))
 
-        resq.put((coh, cmi))
+        for w in wrkrs:
+            w.join()
+
+        print("[%s] %d surrogates done. Saving..." % (str(datetime.now()), NUM_SURR))
 
 
-## SURROGATES
-if NUM_SURR > 0:
-    print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
-    a = enso.get_seasonality(DETREND = False)
-    enso_sg = SurrogateField()
-    enso_sg.copy_field(enso)
-
-    surr_completed = 0
-    surrCoherence = np.zeros(([NUM_SURR] + list(phase_phase_coherence.shape)))
-    surrCMI = np.zeros_like(surrCoherence)
-    jobq = Queue()
-    resq = Queue()
-    for i in range(NUM_SURR):
-        jobq.put(1)
-    for i in range(WRKRS):
-        jobq.put(None)
-
-    wrkrs = [Process(target=_coh_cmi_surrs, args = (enso_sg, a, scales, jobq, resq)) for i in range(WRKRS)]
-    for w in wrkrs:
-        w.start()
-
-    while surr_completed < NUM_SURR:
-        coh, cmi = resq.get()
-        surrCoherence[surr_completed, :, :] = coh
-        surrCMI[surr_completed, :, :] = cmi
-        surr_completed += 1
-
-        if surr_completed % 20 == 0:
-            print("..%d/%d surrogate done.." % (surr_completed, NUM_SURR))
-
-    for w in wrkrs:
-        w.join()
-
-    print("[%s] %d surrogates done. Saving..." % (str(datetime.now()), NUM_SURR))
-
-if SAVE:
     with open("CMImap.bin", 'wb') as f:
         cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
             'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI}, f, protocol = cPickle.HIGHEST_PROTOCOL)
+
+else:
+
+    with open("CMImap.bin", 'rb') as f:
+        result = cPickle.load(f)
+
+    phase_phase_coherence = result['phase x phase data']
+    phase_phase_CMI = result['phase CMI data']
+    surrCoherence = result['phase x phase surrs']
+    surrCMI = result['phase CMI surrs']
+
+    res_phase_coh = np.zeros_like(phase_phase_coherence)
+    res_phase_cmi = np.zeros_like(res_phase_coh)
+
+    for i in range(res_phase_coh.shape[0]):
+        for j in range(res_phase_coh.shape[1]):
+            res_phase_coh[i, j] = np.sum(np.greater(phase_phase_coherence[i, j], surrCoherence[:, i, j])) / np.float(surrCoherence.shape[0])
+            res_phase_cmi[i, j] = np.sum(np.greater(phase_phase_CMI[i, j], surrCMI[:, i, j])) / np.float(surrCMI.shape[0])
+
+    scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
+    # a = np.random.rand(scales.shape[0], scales.shape[0]) + 0.5
+    x, y = np.meshgrid(scales, scales)
+    fig, axs = plt.subplots(1, 2, figsize = (13,7))
+    i = 1
+    for ax in axs.ravel():
+        cs = ax.contourf(x, y, a, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"))
+        ax.tick_params(axis='both', which='major', labelsize = 17)
+        ax.set_title("test")
+        ax.xaxis.set_major_locator(MultipleLocator(12))
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
+        ax.xaxis.set_minor_locator(MultipleLocator(6))
+        ax.yaxis.set_major_locator(MultipleLocator(12))
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
+        ax.yaxis.set_minor_locator(MultipleLocator(6))
+        ax.set_xlabel("period [years]", size = 20)
+        if i == 1:
+            ax.set_ylabel("period [years]", size = 20)
+        i += 1
+        # fig.colorbar(cs, ax = ax, shrink = 0.8)
+
+    # plt.savefig('test.png')
+    print scales
 
 
 
