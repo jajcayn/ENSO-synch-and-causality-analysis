@@ -24,7 +24,6 @@ def load_enso_SSTs():
     time = np.zeros_like(enso.data, dtype = np.int32)
     y = np.int(enso_raw[0, 0])
     start_date = date(y, 1, 1)
-    print start_date
     delta = relativedelta(months = +1)
     d = start_date
     for i in range(time.shape[0]):
@@ -47,8 +46,8 @@ def phase_diff(ph1, ph2):
     return ph
 
 WVLT_SPAN = [5,93] # unit is month
-NUM_SURR = 3
-WRKRS = 3
+NUM_SURR = 1000
+WRKRS = 20
 SAVE = True
 
 
@@ -133,7 +132,7 @@ if NUM_SURR > 0:
     for i in range(WRKRS):
         jobq.put(None)
 
-    wrkrs = [Process(target=_coh_cmi_surrs, args = (enso_sg, a, scales, jobq, resq))]
+    wrkrs = [Process(target=_coh_cmi_surrs, args = (enso_sg, a, scales, jobq, resq)) for i in range(WRKRS)]
     for w in wrkrs:
         w.start()
 
@@ -143,17 +142,18 @@ if NUM_SURR > 0:
         surrCMI[surr_completed, :, :] = cmi
         surr_completed += 1
 
-        # if surr_completed % 20 == 0:
-        print("..%d/%d surrogate done.." % (surr_completed, NUM_SURR))
+        if surr_completed % 20 == 0:
+            print("..%d/%d surrogate done.." % (surr_completed, NUM_SURR))
 
     for w in wrkrs:
         w.join()
 
     print("[%s] %d surrogates done. Saving..." % (str(datetime.now()), NUM_SURR))
 
-with open("CMImap.bin", 'wb') as f:
-    cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
-        'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI}, f, protocol = cPickle.HIGHEST_PROTOCOL)
+if SAVE:
+    with open("CMImap.bin", 'wb') as f:
+        cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
+            'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI}, f, protocol = cPickle.HIGHEST_PROTOCOL)
 
 
 
