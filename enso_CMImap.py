@@ -49,7 +49,8 @@ def phase_diff(ph1, ph2):
 WVLT_SPAN = [5,93] # unit is month
 NUM_SURR = 1000
 WRKRS = 20
-COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
+BINS = 4
+COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
 
 if COMPUTE:
     enso = load_enso_SSTs()
@@ -73,13 +74,13 @@ if COMPUTE:
             wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
             phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
 
-            phase_phase_coherence[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = 8)
+            phase_phase_coherence[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
 
             # conditional mutual inf -- avg over lags 1 - 6 months
             CMI = []
             for tau in range(1, 6):
                 CMI.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
-                    phase_j[:-tau], algorithm = 'EQQ2', bins = 8))
+                    phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
             phase_phase_CMI[i, j] = np.mean(np.array(CMI))
 
     print("[%s] Analysis on data done." % str(datetime.now()))
@@ -104,13 +105,13 @@ if COMPUTE:
                     wave, _, _, _ = wavelet_analysis.continous_wavelet(sg.surr_data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                     phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
 
-                    coh[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = 8)
+                    coh[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
 
                     # conditional mutual inf -- avg over lags 1 - 6 months
                     CMI_temp = []
                     for tau in range(1, 6):
                         CMI_temp.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
-                            phase_j[:-tau], algorithm = 'EQQ2', bins = 8))
+                            phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
                     cmi[i, j] = np.mean(np.array(CMI_temp))
 
             resq.put((coh, cmi))
@@ -152,13 +153,14 @@ if COMPUTE:
         print("[%s] %d surrogates done. Saving..." % (str(datetime.now()), NUM_SURR))
 
 
-    with open("CMImap.bin", 'wb') as f:
+    fname = ("CMImap%dbins.bin" % BINS)
+    with open(fname, 'wb') as f:
         cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
             'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI}, f, protocol = cPickle.HIGHEST_PROTOCOL)
 
 else:
-
-    with open("CMImap.bin", 'rb') as f:
+    fname = ("CMImap%dbins.bin" % BINS)
+    with open(fname, 'rb') as f:
         result = cPickle.load(f)
 
     phase_phase_coherence = result['phase x phase data']
