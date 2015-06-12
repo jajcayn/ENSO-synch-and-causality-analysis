@@ -179,10 +179,10 @@ else:
     x, y = np.meshgrid(scales, scales)
     fig, axs = plt.subplots(1, 2, figsize = (13,7))
     i = 1
-    for ax in axs.ravel():
-        cs = ax.contourf(x, y, a, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"))
+    for ax, cont, tit in zip(axs.ravel(), [res_phase_coh.T, res_phase_cmi.T], ['PHASE COHERENCE', 'CMI PHASE DIFF']):
+        cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
         ax.tick_params(axis='both', which='major', labelsize = 17)
-        ax.set_title("test")
+        ax.set_title(tit, size = 28)
         ax.xaxis.set_major_locator(MultipleLocator(12))
         ax.xaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
         ax.xaxis.set_minor_locator(MultipleLocator(6))
@@ -192,10 +192,12 @@ else:
         ax.set_xlabel("period [years]", size = 20)
         if i == 1:
             ax.set_ylabel("period [years]", size = 20)
+        elif i == 2:
+            # fig.colorbar(cs, ax = ax, shrink = 0.8)
+            pass
         i += 1
-        # fig.colorbar(cs, ax = ax, shrink = 0.8)
 
-    # plt.savefig('test.png')
+    plt.savefig('enso_phase_mi.png')
     print scales
 
 
