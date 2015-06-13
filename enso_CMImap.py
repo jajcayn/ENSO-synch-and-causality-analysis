@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 from matplotlib.ticker import MultipleLocator, FuncFormatter
 import cPickle
 import sys
+import matplotlib.gridspec as gridspec
 
 COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
 
@@ -214,9 +215,17 @@ else:
     scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
     # a = np.random.rand(scales.shape[0], scales.shape[0]) + 0.5
     x, y = np.meshgrid(scales, scales)
-    fig, axs = plt.subplots(1, 2, figsize = (13,7))
-    i = 1
-    for ax, cont, tit in zip(axs.ravel(), [res_phase_coh.T, res_phase_cmi.T], ['PHASE COHERENCE', 'CMI PHASE DIFF']):
+
+    # fig, axs = plt.subplots(1, 2, figsize = (13,7))
+    fig = plt.figure(figsize=(15,15))
+    gs = gridspec.GridSpec(2, 2)
+    gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
+    i = 0
+    axs = [gs[0,0], gs[0,1], gs[1,0], gs[1,1]]
+    plot = [res_phase_coh.T, res_phase_cmi.T, res_phase_coh.T, res_phase_cmi.T]
+    tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI']
+    for ax, cont, tit in zip(axs, plot, tits):
+        ax = plt.subplot(ax)
         cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
         ax.tick_params(axis='both', which='major', labelsize = 17)
         ax.set_title(tit, size = 28)
@@ -227,14 +236,14 @@ else:
         ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
         ax.yaxis.set_minor_locator(MultipleLocator(6))
         ax.set_xlabel("period [years]", size = 20)
-        if i == 1:
+        if i % 2 == 0:
             ax.set_ylabel("period [years]", size = 20)
-        elif i == 2:
-            # fig.colorbar(cs, ax = ax, shrink = 0.8)
-            pass
+        else:
+            fig.colorbar(cs, ax = ax, shrink = 0.5)
         i += 1
 
-    plt.savefig('enso_phase_mi_%dbins.png' % BINS)
+    # plt.savefig('enso_phase_mi_%dbins.png' % BINS)
+    plt.savefig('test.png')
     print scales
 
 
