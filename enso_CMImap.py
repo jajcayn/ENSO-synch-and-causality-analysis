@@ -95,8 +95,9 @@ if COMPUTE:
             phase_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
 
             CMI2 = []
+            eta = np.int(scales[i] / 4)
             for tau in range(1, 7): # possible 1-31
-                CMI2.append(MI.cond_mutual_information(phase_i[:-tau], amp_j[tau:], amp_j[:-tau], algorithm = 'EQQ2', 
+                CMI2.append(MI.cond_mutual_information(phase_i[eta:-tau], amp_j[tau+eta:], (amp_j[eta:-tau], amp_j[:-tau-eta]), algorithm = 'EQQ2', 
                     bins = BINS))
                 # now just 1d condition, later a(t); a(t-eta); a(t-2*eta), eta = 1/4*period of phase_i
             phase_amp_condMI[i, j] = np.mean(np.array(CMI2))
@@ -138,8 +139,9 @@ if COMPUTE:
                     ph_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
 
                     CMI2 = []
+                    eta = np.int(scales[i] / 4)
                     for tau in range(1, 7): # possible 1-31
-                        CMI2.append(MI.cond_mutual_information(phase_i[:-tau], amp_j[tau:], amp_j[:-tau], algorithm = 'EQQ2', 
+                        CMI2.append(MI.cond_mutual_information(phase_i[eta:-tau], amp_j[tau+eta:], (amp_j[eta:-tau], amp_j[:-tau-eta]), algorithm = 'EQQ2', 
                             bins = BINS))
                         # now just 1d condition, later a(t); a(t-eta); a(t-2*eta), eta = 1/4*period of phase_i
                     ph_amp_CMI[i, j] = np.mean(np.array(CMI2))
@@ -187,7 +189,7 @@ if COMPUTE:
         print("[%s] %d surrogates done. Saving..." % (str(datetime.now()), NUM_SURR))
 
 
-    fname = ("CMImap%dbins.bin" % BINS)
+    fname = ("CMImap%dbins2Dcond.bin" % BINS)
     with open(fname, 'wb') as f:
         cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
             'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
@@ -203,14 +205,22 @@ else:
     phase_phase_CMI = result['phase CMI data']
     surrCoherence = result['phase x phase surrs']
     surrCMI = result['phase CMI surrs']
+    phase_amp_MI = result['phase x amp data']
+    phase_amp_condMI = result['phase amp CMI data']
+    surrPhaseAmp = result['phase x amp surrs']
+    surrPhaseAmpCMI = result['phase amp CMI surrs']
 
     res_phase_coh = np.zeros_like(phase_phase_coherence)
     res_phase_cmi = np.zeros_like(res_phase_coh)
+    res_phase_amp = np.zeros_like(res_phase_coh)
+    res_phase_amp_CMI = np.zeros_like(res_phase_coh)
 
     for i in range(res_phase_coh.shape[0]):
         for j in range(res_phase_coh.shape[1]):
             res_phase_coh[i, j] = np.sum(np.greater(phase_phase_coherence[i, j], surrCoherence[:, i, j])) / np.float(surrCoherence.shape[0])
             res_phase_cmi[i, j] = np.sum(np.greater(phase_phase_CMI[i, j], surrCMI[:, i, j])) / np.float(surrCMI.shape[0])
+            res_phase_amp[i, j] = np.sum(np.greater(phase_amp_MI[i, j], surrPhaseAmp[:, i, j])) / np.float(surrPhaseAmp.shape[0])
+            res_phase_amp_CMI[i, j] = np.sum(np.greater(phase_amp_condMI[i, j], surrPhaseAmpCMI[:, i, j])) / np.float(surrPhaseAmpCMI.shape[0])
 
     scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
     # a = np.random.rand(scales.shape[0], scales.shape[0]) + 0.5
@@ -222,8 +232,8 @@ else:
     gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
     i = 0
     axs = [gs[0,0], gs[0,1], gs[1,0], gs[1,1]]
-    plot = [res_phase_coh.T, res_phase_cmi.T, res_phase_coh.T, res_phase_cmi.T]
-    tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI']
+    plot = [res_phase_coh.T, res_phase_cmi.T, res_phase_amp.T, res_phase_amp_CMI.T]
+    tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI 1D cond.']
     for ax, cont, tit in zip(axs, plot, tits):
         ax = plt.subplot(ax)
         cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
@@ -239,11 +249,12 @@ else:
         if i % 2 == 0:
             ax.set_ylabel("period [years]", size = 20)
         else:
-            fig.colorbar(cs, ax = ax, shrink = 0.5)
+            # fig.colorbar(cs, ax = ax, shrink = 0.5)
+            pass
         i += 1
 
-    # plt.savefig('enso_phase_mi_%dbins.png' % BINS)
-    plt.savefig('test.png')
+    plt.savefig('enso_phase_mi_%dbins.png' % BINS)
+    # plt.savefig('test.png')
     print scales
 
 
