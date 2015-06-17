@@ -66,7 +66,8 @@ WRKRS = 20
 BINS = 4
 
 # CMIP5model = 'N34_CanESM2_0'# None for data or name of the model + _ + number of TS as more time series is available
-CMIP5models = ['N34_CCSM4_0', 'N34_CNRMCM5_0', 'N34_CSIROmk360_0', 'N34_CanESM2_0', 'N34_GFDLCM3_0', 'N34_GISSE2Hp1_0']
+# CMIP5models = ['N34_CCSM4_0', 'N34_CNRMCM5_0', 'N34_CSIROmk360_0', 'N34_CanESM2_0', 'N34_GFDLCM3_0', 'N34_GISSE2Hp1_0']
+CMIP5models = ['N34_GISSE2Hp2_0', 'N34_GISSE2Hp3_0', 'N34_GISSE2Rp1_0', 'N34_GISSE2Rp2_0', 'N34_GISSE2Rp3_0', 'N34_HadGem2ES_0', 'N34_IPSL_CM5A_LR_0', 'N34_MIROC5_0', 'N34_MRICGCM3_0']
 
 if COMPUTE:
     for CMIP5model in CMIP5models:
@@ -207,6 +208,7 @@ if COMPUTE:
                 'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
                 'phase amp CMI data' : phase_amp_condMI, 'phase x amp surrs' : surrPhaseAmp, 'phase amp CMI surrs' : surrPhaseAmpCMI}, 
                 f, protocol = cPickle.HIGHEST_PROTOCOL)
+    print("[%s] All models done." % str(datetime.now()))
 
 else:
     fname = ("CMImap%dbins3Dcond.bin" % BINS)
