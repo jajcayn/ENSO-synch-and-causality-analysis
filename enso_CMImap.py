@@ -8,6 +8,7 @@ import sys
 import matplotlib.gridspec as gridspec
 
 COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
+CMIP5model = 'N34_CanESM2_0'# None for data or name of the model + _ + number of TS as more time series is available
 
 if COMPUTE:
     # Works only on Linux, change dirs if needed
@@ -40,6 +41,12 @@ def load_enso_SSTs():
 
     enso.time = time
     enso.location = 'NINO3.4 SSTs'
+
+    if CMIP5model is not None:
+        fname = CMIP5model[:-2] + '.txt'
+        model = np.loadtxt(fname)
+        ts_num = np.int(CMIP5model[-1])
+        enso.data = model[:, ts_num]
 
     # select 1024 data points
     enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = True)
@@ -197,18 +204,20 @@ if COMPUTE:
             f, protocol = cPickle.HIGHEST_PROTOCOL)
 
 else:
-    fname = ("CMImap%dbins.bin" % BINS)
+    fname = ("CMImap%dbins3Dcond.bin" % BINS)
+    CUT = slice(0,1000)
+    version = 3
     with open(fname, 'rb') as f:
         result = cPickle.load(f)
 
     phase_phase_coherence = result['phase x phase data']
     phase_phase_CMI = result['phase CMI data']
-    surrCoherence = result['phase x phase surrs']
-    surrCMI = result['phase CMI surrs']
+    surrCoherence = result['phase x phase surrs'][CUT, ...]
+    surrCMI = result['phase CMI surrs'][CUT, ...]
     phase_amp_MI = result['phase x amp data']
     phase_amp_condMI = result['phase amp CMI data']
-    surrPhaseAmp = result['phase x amp surrs']
-    surrPhaseAmpCMI = result['phase amp CMI surrs']
+    surrPhaseAmp = result['phase x amp surrs'][CUT, ...]
+    surrPhaseAmpCMI = result['phase amp CMI surrs'][CUT, ...]
 
     res_phase_coh = np.zeros_like(phase_phase_coherence)
     res_phase_cmi = np.zeros_like(res_phase_coh)
@@ -233,7 +242,7 @@ else:
     i = 0
     axs = [gs[0,0], gs[0,1], gs[1,0], gs[1,1]]
     plot = [res_phase_coh.T, res_phase_cmi.T, res_phase_amp.T, res_phase_amp_CMI.T]
-    tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI 1D cond.']
+    tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI 3D cond.']
     for ax, cont, tit in zip(axs, plot, tits):
         ax = plt.subplot(ax)
         cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
@@ -253,7 +262,7 @@ else:
             pass
         i += 1
 
-    plt.savefig('enso_phase_mi_%dbins.png' % BINS)
+    plt.savefig('enso_phase_mi_%dbins3Dcond.png' % (BINS))
     # plt.savefig('test.png')
     print scales
 
