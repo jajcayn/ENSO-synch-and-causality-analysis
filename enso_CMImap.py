@@ -196,7 +196,7 @@ if COMPUTE:
         print("[%s] %d surrogates done. Saving..." % (str(datetime.now()), NUM_SURR))
 
 
-    fname = ("CMImap%dbins2Dcond.bin" % BINS)
+    fname = ("CMImap%dbins2Dcond_%s.bin" % (BINS, CMIP5model))
     with open(fname, 'wb') as f:
         cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
             'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
