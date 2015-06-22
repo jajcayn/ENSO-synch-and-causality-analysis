@@ -61,13 +61,13 @@ def phase_diff(ph1, ph2):
     return ph
 
 WVLT_SPAN = [5,93] # unit is month
-NUM_SURR = 100
+NUM_SURR = 1000
 WRKRS = 20
 BINS = 4
 
 # CMIP5model = 'N34_CanESM2_0'# None for data or name of the model + _ + number of TS as more time series is available
-CMIP5models = ['N34_CCSM4_1', 'N34_CNRMCM5_1', 'N34_CSIROmk360_1', 'N34_CanESM2_1', 'N34_GFDLCM3_1', 'N34_GISSE2Hp1_1']
-CMIP5models += ['N34_GISSE2Hp2_1', 'N34_GISSE2Hp3_1', 'N34_GISSE2Rp1_1', 'N34_GISSE2Rp2_1', 'N34_GISSE2Rp3_1', 'N34_HadGem2ES_1', 'N34_IPSL_CM5A_LR_1', 'N34_MIROC5_1', 'N34_MRICGCM3_1']
+CMIP5models = ['N34_CCSM4_1', 'N34_CNRMCM5_1', 'N34_CSIROmk360_1']
+# CMIP5models += ['N34_GISSE2Hp2_1', 'N34_GISSE2Hp3_1', 'N34_GISSE2Rp1_1', 'N34_GISSE2Rp2_1', 'N34_GISSE2Rp3_1', 'N34_HadGem2ES_1', 'N34_IPSL_CM5A_LR_1', 'N34_MIROC5_1', 'N34_MRICGCM3_1']
 
 if COMPUTE:
     for CMIP5model in CMIP5models:
