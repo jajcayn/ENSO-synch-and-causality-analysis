@@ -8,12 +8,13 @@ import sys
 import matplotlib.gridspec as gridspec
 
 COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
-CMIP5model = 'N34_CanESM2_0'# None for data or name of the model + _ + number of TS as more time series is available
+CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 
 if COMPUTE:
     # Works only on Linux, change dirs if needed
     sys.path.append('/home/nikola/Work/phd/multi-scale/src')
     sys.path.append('/home/nikola/Work/phd/multi-scale/surrogates')
+    sys.path.append('/home/nikola/Work/phd/mutual_information')
 
     import wavelet_analysis
     import mutual_information as MI
@@ -66,153 +67,152 @@ WRKRS = 20
 BINS = 4
 
 # CMIP5model = 'N34_CanESM2_0'# None for data or name of the model + _ + number of TS as more time series is available
-CMIP5models = ['N34_CCSM4_1', 'N34_CNRMCM5_1', 'N34_CSIROmk360_1']
+# CMIP5models = ['N34_CCSM4_1', 'N34_CNRMCM5_1', 'N34_CSIROmk360_1']
 # CMIP5models += ['N34_GISSE2Hp2_1', 'N34_GISSE2Hp3_1', 'N34_GISSE2Rp1_1', 'N34_GISSE2Rp2_1', 'N34_GISSE2Rp3_1', 'N34_HadGem2ES_1', 'N34_IPSL_CM5A_LR_1', 'N34_MIROC5_1', 'N34_MRICGCM3_1']
 
 if COMPUTE:
-    for CMIP5model in CMIP5models:
-        print("[%s] Evaluating %s model data... (out of %d models)" % (str(datetime.now()), CMIP5model[:-2], len(CMIP5models)))
-        enso = load_enso_SSTs()
+    # for CMIP5model in CMIP5models:
+    #     print("[%s] Evaluating %s model data... (out of %d models)" % (str(datetime.now()), CMIP5model[:-2], len(CMIP5models)))
+    enso = load_enso_SSTs()
 
-        ## DATA
-        # prepare result matrices
-        k0 = 6. # wavenumber of Morlet wavelet used in analysis
-        y = 12 # year in months
-        fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + np.power(k0,2)))
-        scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
-        phase_phase_coherence = np.zeros((scales.shape[0], scales.shape[0]))
-        phase_phase_CMI = np.zeros_like(phase_phase_coherence)
-        phase_amp_MI = np.zeros_like(phase_phase_coherence)
-        phase_amp_condMI = np.zeros_like(phase_phase_coherence)
+    ## DATA
+    # prepare result matrices
+    k0 = 6. # wavenumber of Morlet wavelet used in analysis
+    y = 12 # year in months
+    fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + np.power(k0,2)))
+    scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
+    phase_phase_coherence = np.zeros((scales.shape[0], scales.shape[0]))
+    phase_phase_CMI = np.zeros_like(phase_phase_coherence)
+    phase_amp_MI = np.zeros_like(phase_phase_coherence)
+    phase_amp_condMI = np.zeros_like(phase_phase_coherence)
 
-        for i in range(phase_phase_coherence.shape[0]):
-            sc_i = scales[i] / fourier_factor
-            wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
-            phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
-            
-            for j in range(phase_phase_coherence.shape[1]):
-                sc_j = scales[j] / fourier_factor
-                wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
-                phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
-                amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
+    for i in range(phase_phase_coherence.shape[0]):
+        sc_i = scales[i] / fourier_factor
+        wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+        phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+        
+        for j in range(phase_phase_coherence.shape[1]):
+            sc_j = scales[j] / fourier_factor
+            wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+            phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+            amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
-                phase_phase_coherence[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
+            phase_phase_coherence[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
 
-                # conditional mutual inf -- avg over lags 1 - 6 months
-                CMI = []
-                for tau in range(1, 7):
-                    CMI.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
-                        phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
-                phase_phase_CMI[i, j] = np.mean(np.array(CMI))
+            # conditional mutual inf -- avg over lags 1 - 6 months
+            CMI = []
+            for tau in range(1, 7):
+                CMI.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
+                    phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
+            phase_phase_CMI[i, j] = np.mean(np.array(CMI))
 
-                phase_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
+            phase_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
 
-                CMI2 = []
-                eta = np.int(scales[i] / 4)
-                for tau in range(1, 7): # possible 1-31
-                    CMI2.append(MI.cond_mutual_information(phase_i[eta:-tau], amp_j[tau+eta:], (amp_j[eta:-tau], amp_j[:-tau-eta]), algorithm = 'EQQ2', 
-                        bins = BINS))
-                    # now just 1d condition, later a(t); a(t-eta); a(t-2*eta), eta = 1/4*period of phase_i
-                phase_amp_condMI[i, j] = np.mean(np.array(CMI2))
+            CMI2 = []
+            eta = np.int(scales[i] / 4)
+            for tau in range(1, 7): # possible 1-31
+                x, y, z = MI.get_time_series_condition([phase_i, amp_j], tau = tau, dim_of_condition = 3, eta = eta)
+                CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
+                # now just 1d condition, later a(t); a(t-eta); a(t-2*eta), eta = 1/4*period of phase_i
+            phase_amp_condMI[i, j] = np.mean(np.array(CMI2))
 
-        print("[%s] Analysis on data done." % str(datetime.now()))
-
-
-        def _coh_cmi_surrs(sg, a, sc, jobq, resq):
-            mean, var, _ = a
-            while jobq.get() is not None:
-                sg.construct_fourier_surrogates_spatial()
-                sg.add_seasonality(mean, var, None)
-
-                coh = np.zeros((sc.shape[0], sc.shape[0]))
-                cmi = np.zeros_like(phase_phase_coherence)
-                ph_amp_MI = np.zeros_like(phase_phase_coherence)
-                ph_amp_CMI = np.zeros_like(phase_phase_coherence)
-
-                for i in range(coh.shape[0]):
-                    sc_i = sc[i] / fourier_factor
-                    wave, _, _, _ = wavelet_analysis.continous_wavelet(sg.surr_data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
-                    phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
-                    
-                    for j in range(coh.shape[1]):
-                        sc_j = sc[j] / fourier_factor
-                        wave, _, _, _ = wavelet_analysis.continous_wavelet(sg.surr_data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
-                        phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
-                        amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
-
-                        coh[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
-
-                        # conditional mutual inf -- avg over lags 1 - 6 months
-                        CMI_temp = []
-                        for tau in range(1, 7):
-                            CMI_temp.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
-                                phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
-                        cmi[i, j] = np.mean(np.array(CMI_temp))
-
-                        ph_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
-
-                        CMI2 = []
-                        eta = np.int(scales[i] / 4)
-                        for tau in range(1, 7): # possible 1-31
-                            CMI2.append(MI.cond_mutual_information(phase_i[eta:-tau], amp_j[tau+eta:], (amp_j[eta:-tau], amp_j[:-tau-eta]), algorithm = 'EQQ2', 
-                                bins = BINS))
-                            # now just 1d condition, later a(t); a(t-eta); a(t-2*eta), eta = 1/4*period of phase_i
-                        ph_amp_CMI[i, j] = np.mean(np.array(CMI2))
-
-                resq.put((coh, cmi, ph_amp_MI, ph_amp_CMI))
+    print("[%s] Analysis on data done." % str(datetime.now()))
 
 
-        ## SURROGATES
-        if NUM_SURR > 0:
-            print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
-            a = enso.get_seasonality(DETREND = False)
-            enso_sg = SurrogateField()
-            enso_sg.copy_field(enso)
+    def _coh_cmi_surrs(sg, a, sc, jobq, resq):
+        mean, var, _ = a
+        while jobq.get() is not None:
+            sg.construct_fourier_surrogates_spatial()
+            sg.add_seasonality(mean, var, None)
 
-            surr_completed = 0
-            surrCoherence = np.zeros(([NUM_SURR] + list(phase_phase_coherence.shape)))
-            surrCMI = np.zeros_like(surrCoherence)
-            surrPhaseAmp = np.zeros_like(surrCoherence)
-            surrPhaseAmpCMI = np.zeros_like(surrCoherence)
-            jobq = Queue()
-            resq = Queue()
-            for i in range(NUM_SURR):
-                jobq.put(1)
-            for i in range(WRKRS):
-                jobq.put(None)
+            coh = np.zeros((sc.shape[0], sc.shape[0]))
+            cmi = np.zeros_like(phase_phase_coherence)
+            ph_amp_MI = np.zeros_like(phase_phase_coherence)
+            ph_amp_CMI = np.zeros_like(phase_phase_coherence)
 
-            wrkrs = [Process(target=_coh_cmi_surrs, args = (enso_sg, a, scales, jobq, resq)) for i in range(WRKRS)]
-            for w in wrkrs:
-                w.start()
+            for i in range(coh.shape[0]):
+                sc_i = sc[i] / fourier_factor
+                wave, _, _, _ = wavelet_analysis.continous_wavelet(sg.surr_data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+                
+                for j in range(coh.shape[1]):
+                    sc_j = sc[j] / fourier_factor
+                    wave, _, _, _ = wavelet_analysis.continous_wavelet(sg.surr_data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                    phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+                    amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
-            while surr_completed < NUM_SURR:
-                coh, cmi, phAmp, phAmpCMI = resq.get()
-                surrCoherence[surr_completed, :, :] = coh
-                surrCMI[surr_completed, :, :] = cmi
-                surrPhaseAmp[surr_completed, :, :] = phAmp
-                surrPhaseAmpCMI[surr_completed, :, :] = phAmpCMI
-                surr_completed += 1
+                    coh[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
 
-                if surr_completed % 20 == 0:
-                    print("..%d/%d surrogate done.." % (surr_completed, NUM_SURR))
+                    # conditional mutual inf -- avg over lags 1 - 6 months
+                    CMI_temp = []
+                    for tau in range(1, 7):
+                        CMI_temp.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
+                            phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
+                    cmi[i, j] = np.mean(np.array(CMI_temp))
 
-            for w in wrkrs:
-                w.join()
+                    ph_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
 
-            print("[%s] %d surrogates done. Saving..." % (str(datetime.now()), NUM_SURR))
+                    CMI2 = []
+                    eta = np.int(scales[i] / 4)
+                    for tau in range(1, 7): # possible 1-31
+                        x, y, z = MI.get_time_series_condition([phase_i, amp_j], tau = tau, dim_of_condition = 3, eta = eta)
+                        CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
+                    ph_amp_CMI[i, j] = np.mean(np.array(CMI2))
+
+            resq.put((coh, cmi, ph_amp_MI, ph_amp_CMI))
 
 
-        fname = ("CMImap%dbins2Dcond_%s.bin" % (BINS, CMIP5model))
-        with open(fname, 'wb') as f:
-            cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
-                'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
-                'phase amp CMI data' : phase_amp_condMI, 'phase x amp surrs' : surrPhaseAmp, 'phase amp CMI surrs' : surrPhaseAmpCMI}, 
-                f, protocol = cPickle.HIGHEST_PROTOCOL)
-    print("[%s] All models done." % str(datetime.now()))
+    ## SURROGATES
+    if NUM_SURR > 0:
+        print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
+        a = enso.get_seasonality(DETREND = False)
+        enso_sg = SurrogateField()
+        enso_sg.copy_field(enso)
+
+        surr_completed = 0
+        surrCoherence = np.zeros(([NUM_SURR] + list(phase_phase_coherence.shape)))
+        surrCMI = np.zeros_like(surrCoherence)
+        surrPhaseAmp = np.zeros_like(surrCoherence)
+        surrPhaseAmpCMI = np.zeros_like(surrCoherence)
+        jobq = Queue()
+        resq = Queue()
+        for i in range(NUM_SURR):
+            jobq.put(1)
+        for i in range(WRKRS):
+            jobq.put(None)
+
+        wrkrs = [Process(target=_coh_cmi_surrs, args = (enso_sg, a, scales, jobq, resq)) for i in range(WRKRS)]
+        for w in wrkrs:
+            w.start()
+
+        while surr_completed < NUM_SURR:
+            coh, cmi, phAmp, phAmpCMI = resq.get()
+            surrCoherence[surr_completed, :, :] = coh
+            surrCMI[surr_completed, :, :] = cmi
+            surrPhaseAmp[surr_completed, :, :] = phAmp
+            surrPhaseAmpCMI[surr_completed, :, :] = phAmpCMI
+            surr_completed += 1
+
+            if surr_completed % 20 == 0:
+                print("..%d/%d surrogate done.." % (surr_completed, NUM_SURR))
+
+        for w in wrkrs:
+            w.join()
+
+        print("[%s] %d surrogates done. Saving..." % (str(datetime.now()), NUM_SURR))
+
+
+    fname = ("CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
+    with open(fname, 'wb') as f:
+        cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
+            'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
+            'phase amp CMI data' : phase_amp_condMI, 'phase x amp surrs' : surrPhaseAmp, 'phase amp CMI surrs' : surrPhaseAmpCMI}, 
+            f, protocol = cPickle.HIGHEST_PROTOCOL)
+        # print("[%s] All models done." % str(datetime.now()))
 
 else:
     for CMIP5model in CMIP5models:
-        fname = ("CMImap%dbins2Dcond_%s.bin" % (BINS, CMIP5model))
+        fname = ("CMImap%dbins2Dcond_%s_1000surrs.bin" % (BINS, CMIP5model))
         CUT = slice(0,100)
         version = 3
         with open(fname, 'rb') as f:
@@ -270,7 +270,7 @@ else:
                 pass
             i += 1
 
-        plt.savefig('models/enso_phase_mi_%dbins2Dcond_%s.png' % (BINS, CMIP5model))
+        plt.savefig('models/enso_phase_mi_%dbins2Dcond_%s_1000surrs.png' % (BINS, CMIP5model))
         # plt.savefig('test.png')
 
 
