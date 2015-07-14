@@ -7,7 +7,7 @@ import cPickle
 import sys
 import matplotlib.gridspec as gridspec
 
-COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 
 if COMPUTE:
@@ -49,11 +49,18 @@ def load_enso_SSTs():
         ts_num = np.int(CMIP5model[-1])
         enso.data = model[:, ts_num]
 
+    if NUM_SURR > 0:
+        a = enso.get_seasonality(DETREND = False)
+        enso_sg = SurrogateField()
+        enso_sg.copy_field(enso)
+
+        enso.return_seasonality(a[0], a[1], None)
+
     # select 1024 data points
     enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = True)
     print("[%s] Data loaded with shape %s" % (str(datetime.now()), enso.data.shape))
 
-    return enso
+    return enso, enso_sg, a
 
 def phase_diff(ph1, ph2):
     ph = ph1 - ph2
@@ -73,7 +80,7 @@ BINS = 4
 if COMPUTE:
     # for CMIP5model in CMIP5models:
     #     print("[%s] Evaluating %s model data... (out of %d models)" % (str(datetime.now()), CMIP5model[:-2], len(CMIP5models)))
-    enso = load_enso_SSTs()
+    enso, enso_sg, a = load_enso_SSTs()
 
     ## DATA
     # prepare result matrices
@@ -85,6 +92,8 @@ if COMPUTE:
     phase_phase_CMI = np.zeros_like(phase_phase_coherence)
     phase_amp_MI = np.zeros_like(phase_phase_coherence)
     phase_amp_condMI = np.zeros_like(phase_phase_coherence)
+
+    enso.center_data()
 
     for i in range(phase_phase_coherence.shape[0]):
         sc_i = scales[i] / fourier_factor
@@ -110,7 +119,7 @@ if COMPUTE:
 
             CMI2 = []
             eta = np.int(scales[i] / 4)
-            for tau in range(1, 7): # possible 1-31
+            for tau in range(1, 31): # possible 1-31
                 x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
                 CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
                 # now just 1d condition, later a(t); a(t-eta); a(t-2*eta), eta = 1/4*period of phase_i
@@ -129,6 +138,8 @@ if COMPUTE:
             cmi = np.zeros_like(phase_phase_coherence)
             ph_amp_MI = np.zeros_like(phase_phase_coherence)
             ph_amp_CMI = np.zeros_like(phase_phase_coherence)
+
+            enso_sg.center_surr()
 
             for i in range(coh.shape[0]):
                 sc_i = sc[i] / fourier_factor
@@ -154,7 +165,7 @@ if COMPUTE:
 
                     CMI2 = []
                     eta = np.int(scales[i] / 4)
-                    for tau in range(1, 7): # possible 1-31
+                    for tau in range(1, 31): # possible 1-31
                         x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
                         CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
                     ph_amp_CMI[i, j] = np.mean(np.array(CMI2))
@@ -165,10 +176,7 @@ if COMPUTE:
     ## SURROGATES
     if NUM_SURR > 0:
         print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
-        a = enso.get_seasonality(DETREND = False)
-        enso_sg = SurrogateField()
-        enso_sg.copy_field(enso)
-
+        
         surr_completed = 0
         surrCoherence = np.zeros(([NUM_SURR] + list(phase_phase_coherence.shape)))
         surrCMI = np.zeros_like(surrCoherence)
