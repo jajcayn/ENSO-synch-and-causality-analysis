@@ -111,7 +111,7 @@ if COMPUTE:
             CMI2 = []
             eta = np.int(scales[i] / 4)
             for tau in range(1, 7): # possible 1-31
-                x, y, z = MI.get_time_series_condition([phase_i, amp_j], tau = tau, dim_of_condition = 3, eta = eta)
+                x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
                 CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
                 # now just 1d condition, later a(t); a(t-eta); a(t-2*eta), eta = 1/4*period of phase_i
             phase_amp_condMI[i, j] = np.mean(np.array(CMI2))
@@ -155,7 +155,7 @@ if COMPUTE:
                     CMI2 = []
                     eta = np.int(scales[i] / 4)
                     for tau in range(1, 7): # possible 1-31
-                        x, y, z = MI.get_time_series_condition([phase_i, amp_j], tau = tau, dim_of_condition = 3, eta = eta)
+                        x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
                         CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
                     ph_amp_CMI[i, j] = np.mean(np.array(CMI2))
 
@@ -202,7 +202,7 @@ if COMPUTE:
         print("[%s] %d surrogates done. Saving..." % (str(datetime.now()), NUM_SURR))
 
 
-    fname = ("CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
+    fname = ("CMImap%dbins3Dcond_GaussCorr_amp2.bin" % (BINS))
     with open(fname, 'wb') as f:
         cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
             'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
