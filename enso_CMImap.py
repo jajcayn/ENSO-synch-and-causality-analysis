@@ -56,6 +56,8 @@ def load_enso_SSTs():
         _, _, idx = enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = False)
         enso_sg.copy_field(enso)
         enso_sg.data = enso_sg.data[idx[0]:idx[1]]
+        a[0] = a[0][idx[0]:idx[1]]
+        a[1] = a[1][idx[0]:idx[1]]
 
         enso.return_seasonality(a[0], a[1], None)
 
