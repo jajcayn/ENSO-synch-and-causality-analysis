@@ -56,10 +56,11 @@ def load_enso_SSTs():
         _, _, idx = enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = False)
         enso_sg.copy_field(enso)
         enso_sg.data = enso_sg.data[idx[0]:idx[1]]
-        a[0] = a[0][idx[0]:idx[1]]
-        a[1] = a[1][idx[0]:idx[1]]
 
         enso.return_seasonality(a[0], a[1], None)
+
+        a[0] = a[0][idx[0]:idx[1]]
+        a[1] = a[1][idx[0]:idx[1]]
 
     # select 1024 data points
     enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = True)
@@ -214,7 +215,7 @@ if COMPUTE:
         print("[%s] %d surrogates done. Saving..." % (str(datetime.now()), NUM_SURR))
 
 
-    fname = ("CMImap%dbins3Dcond_GaussCorr_amp2.bin" % (BINS))
+    fname = ("CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
     with open(fname, 'wb') as f:
         cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
             'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
