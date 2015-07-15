@@ -80,7 +80,7 @@ BINS = 4
 if COMPUTE:
     # for CMIP5model in CMIP5models:
     #     print("[%s] Evaluating %s model data... (out of %d models)" % (str(datetime.now()), CMIP5model[:-2], len(CMIP5models)))
-    enso, enso_sg, a = load_enso_SSTs()
+    enso, enso_sg, seasonality = load_enso_SSTs()
 
     ## DATA
     # prepare result matrices
@@ -122,7 +122,6 @@ if COMPUTE:
             for tau in range(1, 31): # possible 1-31
                 x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
                 CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
-                # now just 1d condition, later a(t); a(t-eta); a(t-2*eta), eta = 1/4*period of phase_i
             phase_amp_condMI[i, j] = np.mean(np.array(CMI2))
 
     print("[%s] Analysis on data done." % str(datetime.now()))
@@ -139,7 +138,7 @@ if COMPUTE:
             ph_amp_MI = np.zeros_like(phase_phase_coherence)
             ph_amp_CMI = np.zeros_like(phase_phase_coherence)
 
-            enso_sg.center_surr()
+            sg.center_surr()
 
             for i in range(coh.shape[0]):
                 sc_i = sc[i] / fourier_factor
@@ -189,7 +188,7 @@ if COMPUTE:
         for i in range(WRKRS):
             jobq.put(None)
 
-        wrkrs = [Process(target=_coh_cmi_surrs, args = (enso_sg, a, scales, jobq, resq)) for i in range(WRKRS)]
+        wrkrs = [Process(target=_coh_cmi_surrs, args = (enso_sg, seasonality, scales, jobq, resq)) for i in range(WRKRS)]
         for w in wrkrs:
             w.start()
 
@@ -220,7 +219,7 @@ if COMPUTE:
 
 else:
     # for CMIP5model in CMIP5models:
-    fname = ("CMImap%dbins3Dcond_GaussCorr_other.bin" % (BINS))
+    fname = ("CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
     CUT = slice(0,1000)
     # version = 3
     with open(fname, 'rb') as f:
@@ -278,7 +277,7 @@ else:
             pass
         i += 1
 
-    plt.savefig('enso_phase_mi_%dbins3Dcond_1000surrs_other.png' % (BINS))
+    plt.savefig('enso_phase_mi_%dbins3Dcond_1000surrs_new.png' % (BINS))
         # plt.savefig('test.png')
 
 
