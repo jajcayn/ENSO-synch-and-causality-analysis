@@ -52,7 +52,10 @@ def load_enso_SSTs():
     if NUM_SURR > 0:
         a = enso.get_seasonality(DETREND = False)
         enso_sg = SurrogateField()
+
+        _, _, idx = enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = False)
         enso_sg.copy_field(enso)
+        enso_sg.data = enso_sg.data[idx[0]:idx[1]]
 
         enso.return_seasonality(a[0], a[1], None)
 
