@@ -70,7 +70,7 @@ def plot_MI(MIs, data, fname = "test.png"):
         ax.set_title(tit, size = 28)
         test_string = ("%d // %d -- miss %d" % (cont[cont == 2].shape[0], dat[dat == 1].shape[0], cont[cont == 1].shape[0]))
         ax.text(0.62, 0.9, test_string, horizontalalignment = 'center', verticalalignment = 'center', size = 27, 
-            transform = ax.transAxes, color = "white", bbox = dict(facecolor = 'grey', alpha = 0.7))
+            transform = ax.transAxes, color = "white", bbox = dict(boxstyle = "square,pad=0.25", facecolor = 'grey', alpha = 0.7))
         ax.xaxis.set_major_locator(MultipleLocator(12))
         ax.xaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
         ax.xaxis.set_minor_locator(MultipleLocator(6))
