@@ -50,7 +50,7 @@ def load_enso_SSTs():
         enso.data = model[:, ts_num]
 
     if NUM_SURR > 0:
-        a = enso.get_seasonality(DETREND = False)
+        a = list(enso.get_seasonality(DETREND = False))
         enso_sg = SurrogateField()
 
         _, _, idx = enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = False)
