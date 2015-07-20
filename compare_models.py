@@ -63,12 +63,14 @@ def plot_MI(MIs, data, fname = "test.png"):
     # plot = [res_phase_coh.T, res_phase_cmi.T, res_phase_amp.T, res_phase_amp_CMI.T]
     plot = [MIs[0].T, MIs[1].T, MIs[2].T, MIs[3].T]
     tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI Gauss']
+    counts = []
     for ax, cont, tit, dat in zip(axs, plot, tits, data):
         ax = plt.subplot(ax)
         cs = ax.contourf(x, y, cont, 2, cmap = plt.cm.get_cmap("jet"), extend = 'max')
         ax.tick_params(axis='both', which='major', labelsize = 17)
         ax.set_title(tit, size = 28)
         test_string = ("%d // %d -- miss %d" % (cont[cont == 2].shape[0], dat[dat == 1].shape[0], cont[cont == 1].shape[0]))
+        counts.append([cont[cont == 2].shape[0], dat[dat == 1].shape[0], cont[cont == 1].shape[0]])
         ax.text(0.62, 0.9, test_string, horizontalalignment = 'center', verticalalignment = 'center', size = 27, 
             transform = ax.transAxes, color = "white", bbox = dict(boxstyle = "square,pad=0.25", facecolor = 'grey', alpha = 0.7))
         ax.xaxis.set_major_locator(MultipleLocator(12))
@@ -86,23 +88,31 @@ def plot_MI(MIs, data, fname = "test.png"):
         i += 1
 
     plt.savefig(fname)
+    plt.close()
+
+    return counts
 
 
 ## data
 fname = ("CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
 data = evaluate_MI(fname)
 
-## models
-for a in os.walk("models"):
-    if ".bin" in a[2][0]:
-        break
+# ## models
+# for a in os.walk("models"):
+#     if ".bin" in a[2][0]:
+#         break
 
-models = a[2]
+# models = a[2]
 
-for model_fname in models:
-    model = model_fname[22:-4] # dopln miesto 17
-    result_temp = evaluate_MI("models/" + model_fname)
-    print("%s model read.." % (model))
+CMIP5models = ['N34_CanESM2_0', 'N34_GFDLCM3_0', 'N34_GISSE2Hp1_0', 'N34_GISSE2Hp2_1', 'N34_GISSE2Hp3_1', 'N34_GISSE2Rp1_1']
+CMIP5models += ['N34_GISSE2Rp2_1', 'N34_GISSE2Rp3_1', 'N34_HadGem2ES_1', 'N34_IPSL_CM5A_LR_1', 'N34_MIROC5_1', 'N34_MRICGCM3_1']
+CMIP5models += ['N34_CCSM4_1', 'N34_CNRMCM5_1', 'N34_CSIROmk360_1']
+
+numbers = []
+
+for CMIP5model in CMIP5models:
+    result_temp = evaluate_MI("models/CMImap%dbins3Dcond_GaussCorr_%s.bin" % (BINS, CMIP5model))
+    print("%s model read.." % (CMIP5model))
 
     # tests
     test = []
@@ -110,5 +120,24 @@ for model_fname in models:
         summed = result_temp[no] + data[no]
         test.append(summed)
 
-    fname = ("test%s.png" % model)
-    plot_MI(test, data, fname = "models/" + fname)
+    fname = ("test%s.png" % CMIP5model)
+    counts = plot_MI(test, data, fname = "models/plots/" + fname)
+    numbers.append(counts)
+
+numbers = np.array(numbers)
+
+idx = numbers[:, 0, 0].argmax()
+print("Highest agreement PHASE COHERENCE: %s with %d // %d -- %.1f%%" % (CMIP5models[idx], 
+    numbers[idx, 0, 0], numbers[idx, 0, 1], numbers[idx, 0, 0] / float(numbers[idx, 0, 1]) * 100))
+
+idx = numbers[:, 1, 0].argmax()
+print("Highest agreement CMI PHASE DIFF: %s with %d // %d -- %.1f%%" % (CMIP5models[idx], 
+    numbers[idx, 1, 0], numbers[idx, 1, 1], numbers[idx, 1, 0] / float(numbers[idx, 1, 1]) * 100))
+
+idx = numbers[:, 2, 0].argmax()
+print("Highest agreement PHASE x AMP MI: %s with %d // %d -- %.1f%%" % (CMIP5models[idx], 
+    numbers[idx, 2, 0], numbers[idx, 2, 1], numbers[idx, 2, 0] / float(numbers[idx, 2, 1]) * 100))
+
+idx = numbers[:, 3, 0].argmax()
+print("Highest agreement PHASE x AMP CMI Gauss: %s with %d // %d -- %.1f%%" % (CMIP5models[idx], 
+    numbers[idx, 3, 0], numbers[idx, 3, 1], numbers[idx, 3, 0] / float(numbers[idx, 3, 1]) * 100))
