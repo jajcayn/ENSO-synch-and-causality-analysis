@@ -81,9 +81,9 @@ WRKRS = 20
 bins_list = [4]
 
 # CMIP5model = 'N34_CanESM2_0'# None for data or name of the model + _ + number of TS as more time series is available
-CMIP5models = ['N34_CanESM2_2', 'N34_GFDLCM3_2', 'N34_GISSE2Hp1_2', 'N34_GISSE2Hp2_2', 'N34_GISSE2Hp3_2', 'N34_GISSE2Rp1_2']
-CMIP5models += ['N34_GISSE2Rp2_2', 'N34_GISSE2Rp3_2', 'N34_HadGem2ES_2', 'N34_IPSL_CM5A_LR_2', 'N34_MIROC5_2', 'N34_MRICGCM3_2']
-CMIP5models += ['N34_CCSM4_2', 'N34_CNRMCM5_2', 'N34_CSIROmk360_2']
+CMIP5models = ['N34_CanESM2_3', 'N34_GFDLCM3_3', 'N34_GISSE2Hp1_3', 'N34_GISSE2Hp2_3', 'N34_GISSE2Hp3_3', 'N34_GISSE2Rp1_3']
+CMIP5models += ['N34_GISSE2Rp2_3', 'N34_GISSE2Rp3_3', 'N34_HadGem2ES_3', 'N34_IPSL_CM5A_LR_3', 'N34_MIROC5_3', 'N34_MRICGCM3_0']
+CMIP5models += ['N34_CCSM4_3', 'N34_CNRMCM5_3', 'N34_CSIROmk360_3']
 
 if COMPUTE:
     for BINS in bins_list:
