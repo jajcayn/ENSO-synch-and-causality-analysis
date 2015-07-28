@@ -1,5 +1,7 @@
 import numpy as np
 import cPickle
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import MultipleLocator, FuncFormatter
