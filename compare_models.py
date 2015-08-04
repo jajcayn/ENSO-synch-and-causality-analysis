@@ -106,40 +106,46 @@ data = evaluate_MI(fname)
 
 # models = a[2]
 
-CMIP5models = ['N34_CanESM2_0', 'N34_GFDLCM3_0', 'N34_GISSE2Hp1_0', 'N34_GISSE2Hp2_1', 'N34_GISSE2Hp3_1', 'N34_GISSE2Rp1_1']
-CMIP5models += ['N34_GISSE2Rp2_1', 'N34_GISSE2Rp3_1', 'N34_HadGem2ES_1', 'N34_IPSL_CM5A_LR_1', 'N34_MIROC5_1', 'N34_MRICGCM3_1']
-CMIP5models += ['N34_CCSM4_1', 'N34_CNRMCM5_1', 'N34_CSIROmk360_1']
+CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
+CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
+CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
 
 numbers = []
 
 for CMIP5model in CMIP5models:
-    result_temp = evaluate_MI("models/CMImap%dbins3Dcond_GaussCorr_%s.bin" % (BINS, CMIP5model))
-    print("%s model read.." % (CMIP5model))
+    fname = CMIP5model + '.txt'
+    model = np.loadtxt('N34_CMIP5/' + fname)
+    model_count = model.shape[1]
 
-    # tests
-    test = []
-    for no in range(4):
-        summed = result_temp[no] + data[no]
-        test.append(summed)
+    for num_ts in range(model_count):
+        result_temp = evaluate_MI("models/CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
+        print("%s time series %d model read.." % (CMIP5model, num_ts+1))
 
-    fname = ("test%s.png" % CMIP5model)
-    counts = plot_MI(test, data, fname = "models/plots/" + fname)
-    numbers.append(counts)
+        # tests
+        test = []
+        for no in range(4):
+            summed = result_temp[no] + data[no]
+            test.append(summed)
+
+        fname = ("test%sts%d.png" % (CMIP5model, num_ts))
+        counts = plot_MI(test, data, fname = "models/plots/" + fname)
+        numbers.append(counts)
 
 numbers = np.array(numbers)
+print numbers.shape
 
-idx = numbers[:, 0, 0].argmax()
-print("Highest agreement PHASE COHERENCE: %s with %d // %d -- %.1f%%" % (CMIP5models[idx], 
-    numbers[idx, 0, 0], numbers[idx, 0, 1], numbers[idx, 0, 0] / float(numbers[idx, 0, 1]) * 100))
+# idx = numbers[:, 0, 0].argmax()
+# print("Highest agreement PHASE COHERENCE: %s with %d // %d -- %.1f%%" % (CMIP5models[idx], 
+#     numbers[idx, 0, 0], numbers[idx, 0, 1], numbers[idx, 0, 0] / float(numbers[idx, 0, 1]) * 100))
 
-idx = numbers[:, 1, 0].argmax()
-print("Highest agreement CMI PHASE DIFF: %s with %d // %d -- %.1f%%" % (CMIP5models[idx], 
-    numbers[idx, 1, 0], numbers[idx, 1, 1], numbers[idx, 1, 0] / float(numbers[idx, 1, 1]) * 100))
+# idx = numbers[:, 1, 0].argmax()
+# print("Highest agreement CMI PHASE DIFF: %s with %d // %d -- %.1f%%" % (CMIP5models[idx], 
+#     numbers[idx, 1, 0], numbers[idx, 1, 1], numbers[idx, 1, 0] / float(numbers[idx, 1, 1]) * 100))
 
-idx = numbers[:, 2, 0].argmax()
-print("Highest agreement PHASE x AMP MI: %s with %d // %d -- %.1f%%" % (CMIP5models[idx], 
-    numbers[idx, 2, 0], numbers[idx, 2, 1], numbers[idx, 2, 0] / float(numbers[idx, 2, 1]) * 100))
+# idx = numbers[:, 2, 0].argmax()
+# print("Highest agreement PHASE x AMP MI: %s with %d // %d -- %.1f%%" % (CMIP5models[idx], 
+#     numbers[idx, 2, 0], numbers[idx, 2, 1], numbers[idx, 2, 0] / float(numbers[idx, 2, 1]) * 100))
 
-idx = numbers[:, 3, 0].argmax()
-print("Highest agreement PHASE x AMP CMI Gauss: %s with %d // %d -- %.1f%%" % (CMIP5models[idx], 
-    numbers[idx, 3, 0], numbers[idx, 3, 1], numbers[idx, 3, 0] / float(numbers[idx, 3, 1]) * 100))
+# idx = numbers[:, 3, 0].argmax()
+# print("Highest agreement PHASE x AMP CMI Gauss: %s with %d // %d -- %.1f%%" % (CMIP5models[idx], 
+#     numbers[idx, 3, 0], numbers[idx, 3, 1], numbers[idx, 3, 0] / float(numbers[idx, 3, 1]) * 100))

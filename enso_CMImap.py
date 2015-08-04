@@ -7,7 +7,7 @@ import cPickle
 import sys
 import matplotlib.gridspec as gridspec
 
-COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 
 if COMPUTE:
@@ -80,9 +80,10 @@ WRKRS = 20
 bins_list = [4]
 
 # CMIP5model = 'N34_CanESM2_0'# None for data or name of the model + _ + number of TS as more time series is available
-CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
-CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
-CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
+# CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
+# CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
+# CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
+CMIP5models = ['N34_CanESM2']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -237,65 +238,70 @@ if COMPUTE:
 else:
     BINS = 4
     for CMIP5model in CMIP5models:
-        fname = ("models/CMImap%dbins3Dcond_GaussCorr_%s.bin" % (BINS, CMIP5model))
-        CUT = slice(0,100)
-        # version = 3
-        with open(fname, 'rb') as f:
-            result = cPickle.load(f)
+        fname = CMIP5model + '.txt'
+        model = np.loadtxt('N34_CMIP5/' + fname)
+        model_count = model.shape[1]
 
-        phase_phase_coherence = result['phase x phase data']
-        phase_phase_CMI = result['phase CMI data']
-        surrCoherence = result['phase x phase surrs'][CUT, ...]
-        surrCMI = result['phase CMI surrs'][CUT, ...]
-        phase_amp_MI = result['phase x amp data']
-        phase_amp_condMI = result['phase amp CMI data']
-        surrPhaseAmp = result['phase x amp surrs'][CUT, ...]
-        surrPhaseAmpCMI = result['phase amp CMI surrs'][CUT, ...]
+        for num_ts in range(model_count):
+            fname = ("models/CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
+            CUT = slice(0,100)
+            # version = 3
+            with open(fname, 'rb') as f:
+                result = cPickle.load(f)
 
-        res_phase_coh = np.zeros_like(phase_phase_coherence)
-        res_phase_cmi = np.zeros_like(res_phase_coh)
-        res_phase_amp = np.zeros_like(res_phase_coh)
-        res_phase_amp_CMI = np.zeros_like(res_phase_coh)
+            phase_phase_coherence = result['phase x phase data']
+            phase_phase_CMI = result['phase CMI data']
+            surrCoherence = result['phase x phase surrs'][CUT, ...]
+            surrCMI = result['phase CMI surrs'][CUT, ...]
+            phase_amp_MI = result['phase x amp data']
+            phase_amp_condMI = result['phase amp CMI data']
+            surrPhaseAmp = result['phase x amp surrs'][CUT, ...]
+            surrPhaseAmpCMI = result['phase amp CMI surrs'][CUT, ...]
 
-        for i in range(res_phase_coh.shape[0]):
-            for j in range(res_phase_coh.shape[1]):
-                res_phase_coh[i, j] = np.sum(np.greater(phase_phase_coherence[i, j], surrCoherence[:, i, j])) / np.float(surrCoherence.shape[0])
-                res_phase_cmi[i, j] = np.sum(np.greater(phase_phase_CMI[i, j], surrCMI[:, i, j])) / np.float(surrCMI.shape[0])
-                res_phase_amp[i, j] = np.sum(np.greater(phase_amp_MI[i, j], surrPhaseAmp[:, i, j])) / np.float(surrPhaseAmp.shape[0])
-                res_phase_amp_CMI[i, j] = np.sum(np.greater(phase_amp_condMI[i, j], surrPhaseAmpCMI[:, i, j])) / np.float(surrPhaseAmpCMI.shape[0])
+            res_phase_coh = np.zeros_like(phase_phase_coherence)
+            res_phase_cmi = np.zeros_like(res_phase_coh)
+            res_phase_amp = np.zeros_like(res_phase_coh)
+            res_phase_amp_CMI = np.zeros_like(res_phase_coh)
 
-        scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
-        # a = np.random.rand(scales.shape[0], scales.shape[0]) + 0.5
-        x, y = np.meshgrid(scales, scales)
+            for i in range(res_phase_coh.shape[0]):
+                for j in range(res_phase_coh.shape[1]):
+                    res_phase_coh[i, j] = np.sum(np.greater(phase_phase_coherence[i, j], surrCoherence[:, i, j])) / np.float(surrCoherence.shape[0])
+                    res_phase_cmi[i, j] = np.sum(np.greater(phase_phase_CMI[i, j], surrCMI[:, i, j])) / np.float(surrCMI.shape[0])
+                    res_phase_amp[i, j] = np.sum(np.greater(phase_amp_MI[i, j], surrPhaseAmp[:, i, j])) / np.float(surrPhaseAmp.shape[0])
+                    res_phase_amp_CMI[i, j] = np.sum(np.greater(phase_amp_condMI[i, j], surrPhaseAmpCMI[:, i, j])) / np.float(surrPhaseAmpCMI.shape[0])
 
-        # fig, axs = plt.subplots(1, 2, figsize = (13,7))
-        fig = plt.figure(figsize=(15,15))
-        gs = gridspec.GridSpec(2, 2)
-        gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
-        i = 0
-        axs = [gs[0,0], gs[0,1], gs[1,0], gs[1,1]]
-        plot = [res_phase_coh.T, res_phase_cmi.T, res_phase_amp.T, res_phase_amp_CMI.T]
-        tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI 3D cond.']
-        for ax, cont, tit in zip(axs, plot, tits):
-            ax = plt.subplot(ax)
-            cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
-            ax.tick_params(axis='both', which='major', labelsize = 17)
-            ax.set_title(tit, size = 28)
-            ax.xaxis.set_major_locator(MultipleLocator(12))
-            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
-            ax.xaxis.set_minor_locator(MultipleLocator(6))
-            ax.yaxis.set_major_locator(MultipleLocator(12))
-            ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
-            ax.yaxis.set_minor_locator(MultipleLocator(6))
-            ax.set_xlabel("period [years]", size = 20)
-            if i % 2 == 0:
-                ax.set_ylabel("period [years]", size = 20)
-            else:
-                # fig.colorbar(cs, ax = ax, shrink = 0.5)
-                pass
-            i += 1
+            scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
+            # a = np.random.rand(scales.shape[0], scales.shape[0]) + 0.5
+            x, y = np.meshgrid(scales, scales)
 
-        plt.savefig('models/plots/enso_phase_mi_%dbins3Dcond_%s.png' % (BINS, CMIP5model))
+            # fig, axs = plt.subplots(1, 2, figsize = (13,7))
+            fig = plt.figure(figsize=(15,15))
+            gs = gridspec.GridSpec(2, 2)
+            gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
+            i = 0
+            axs = [gs[0,0], gs[0,1], gs[1,0], gs[1,1]]
+            plot = [res_phase_coh.T, res_phase_cmi.T, res_phase_amp.T, res_phase_amp_CMI.T]
+            tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI 3D cond.']
+            for ax, cont, tit in zip(axs, plot, tits):
+                ax = plt.subplot(ax)
+                cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
+                ax.tick_params(axis='both', which='major', labelsize = 17)
+                ax.set_title(tit, size = 28)
+                ax.xaxis.set_major_locator(MultipleLocator(12))
+                ax.xaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
+                ax.xaxis.set_minor_locator(MultipleLocator(6))
+                ax.yaxis.set_major_locator(MultipleLocator(12))
+                ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
+                ax.yaxis.set_minor_locator(MultipleLocator(6))
+                ax.set_xlabel("period [years]", size = 20)
+                if i % 2 == 0:
+                    ax.set_ylabel("period [years]", size = 20)
+                else:
+                    # fig.colorbar(cs, ax = ax, shrink = 0.5)
+                    pass
+                i += 1
+
+            plt.savefig('models/plots/enso_phase_mi_%dbins3Dcond_%sts%d.png' % (BINS, CMIP5model, num_ts))
         # plt.savefig('test.png')
 
 
