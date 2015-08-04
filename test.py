@@ -1,4 +1,3 @@
-from enso_CMImap import load_enso_SSTs
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import date, datetime
@@ -14,6 +13,7 @@ sys.path.append('/home/nikola/Work/phd/mutual_information')
 from data_class import DataField
 from surrogates import SurrogateField
 from multiprocessing import Process, Queue
+from time import sleep
 
 CMIP5model = None
 
@@ -48,33 +48,40 @@ a[1] = a[1][idx[0]:idx[1]]
 enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = True)
 
 enso.center_data()
-print enso.data[:20]
+print 'data', enso.data[:5]
 
 def _surrs(sg, a, jobq, resq):
     mean, var, _ = a
     while jobq.get() is not None:
+        # np.random.seed()
         sg.construct_fourier_surrogates_spatial()
-        sg.add_seasonality(mean, var, None)
+        n = np.random.uniform(0, 2*np.pi)
+        ts = sg.get_surr()
+        # sg.add_seasonality(mean, var, None)
 
-        sg.center_surr()
+        # sg.center_surr()
+
+        sleep(1)
         
-        resq.put(sg.get_surr())
+        resq.put((ts, n))
 
 numsurr = 100
+WRKRS = 20
 comp = 0
 jobq = Queue()
 resq = Queue()
 for i in range(numsurr):
     jobq.put(1)
-for i in range(3):
+for i in range(WRKRS):
     jobq.put(None)
-wrkrs = [Process(target=_surrs, args = (enso_sg, a, jobq, resq)) for i in range(3)]
+wrkrs = [Process(target=_surrs, args = (enso_sg, a, jobq, resq)) for i in range(WRKRS)]
 for w in wrkrs:
     w.start()
     
 while comp < numsurr:
-    ts = resq.get()
-    print comp, ts[:20]
+    ts, n = resq.get()
+    print ts[:5]
+    # print n
     comp += 1
     
 for w in wrkrs:
