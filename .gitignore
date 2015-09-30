@@ -2,4 +2,5 @@
 *.bin
 *.png
 *.txt
-N34_CMIP5
+N34_CMIP5/
+PROtest/
