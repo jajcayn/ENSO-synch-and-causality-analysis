@@ -96,7 +96,7 @@ def plot_MI(MIs, data, fname = "test.png"):
 
 
 ## data
-fname = ("CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
+fname = ("KNN_CMImap_k_32_3Dcond_GaussCorr.bin")
 data = evaluate_MI(fname)
 
 # ## models
@@ -118,7 +118,7 @@ for CMIP5model in CMIP5models:
     model_count = model.shape[1]
 
     for num_ts in range(model_count):
-        result_temp = evaluate_MI("models/CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
+        result_temp = evaluate_MI("models/kNN_CMImap_k_32_3Dcond%sts%d.bin" % (CMIP5model, num_ts))
         print("%s time series %d model read.." % (CMIP5model, num_ts+1))
 
         # tests
@@ -127,7 +127,7 @@ for CMIP5model in CMIP5models:
             summed = result_temp[no] + data[no]
             test.append(summed)
 
-        fname = ("test%sts%d.png" % (CMIP5model, num_ts))
+        fname = ("kNN-test%sts%d.png" % (CMIP5model, num_ts))
         counts = plot_MI(test, data, fname = "models/plots/" + fname)
         numbers.append(counts)
 

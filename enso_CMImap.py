@@ -7,7 +7,7 @@ import cPickle
 import sys
 import matplotlib.gridspec as gridspec
 
-COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 
 if COMPUTE:
@@ -74,7 +74,7 @@ def phase_diff(ph1, ph2):
     return ph
 
 WVLT_SPAN = [5,93] # unit is month
-NUM_SURR = 1000
+NUM_SURR = 100
 WRKRS = 4
 # BINS = 4
 bins_list = [4]
@@ -241,13 +241,18 @@ if COMPUTE:
 else:
     BINS = 4
     for CMIP5model in CMIP5models:
-        fname = CMIP5model + '.txt'
-        model = np.loadtxt('N34_CMIP5/' + fname)
-        model_count = model.shape[1]
+        # fname = CMIP5model + '.txt'
+        # model = np.loadtxt('N34_CMIP5/' + fname)
+        # model_count = model.shape[1]
+
+        # model_count = 1
+        # CMIP5model = None
+        model_count = 1
 
         for num_ts in range(model_count):
-            fname = ("models/CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
-            CUT = slice(0,100)
+            # fname = ("models/CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
+            fname = ("models/kNN_CMImap_k_32_3DcondN34_CanESM2ts4.bin")
+            CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
                 result = cPickle.load(f)
@@ -260,6 +265,8 @@ else:
             phase_amp_condMI = result['phase amp CMI data']
             surrPhaseAmp = result['phase x amp surrs'][CUT, ...]
             surrPhaseAmpCMI = result['phase amp CMI surrs'][CUT, ...]
+
+            print "loaded"
 
             res_phase_coh = np.zeros_like(phase_phase_coherence)
             res_phase_cmi = np.zeros_like(res_phase_coh)
@@ -304,7 +311,8 @@ else:
                     pass
                 i += 1
 
-            plt.savefig('models/plots/enso_phase_mi_%dbins3Dcond_%sts%d.png' % (BINS, CMIP5model, num_ts))
+            # plt.savefig('models/plots/enso_phase_mi_%dbins3Dcond_%sts%d.png' % (BINS, CMIP5model, num_ts))
+            plt.savefig('kNN_CMImap_k_32_3DcondN34_CanESM2ts4.png')
         # plt.savefig('test.png')
 
 
