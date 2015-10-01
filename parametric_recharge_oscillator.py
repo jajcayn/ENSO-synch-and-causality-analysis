@@ -4,91 +4,96 @@ from scipy.signal import hilbert
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 
+
+class ENSO_PROmodel():
+
+    def __init__(self, damped = False, daily = True, ENSOperiod = 3.75, modulation = 2, lambda0 = 0.4):
+
+        self.damped = damped
+        if daily:
+            self.year = 360
+
+        ## params
+        twopi = 2*np.pi
+        # annual frequency
+        self.omega_a = twopi / self.year
+        # enso period
+        self.omega_e = twopi / (ENSOperiod * self.year)
+        # modulation
+        self.eps = 2*np.pi / (modulation * self.year)
+        # if damped, parameter of damping
+        self.lam0 = twopi / (lambda0 * self.year)
+
+
+    def _PRO_model(self, t, y, damped = False, sigma = 0.04):
+
+        if self.damped:
+            lam = self.lam0 + self.eps * np.cos(self.omega_a * t)
+            noise = np.random.normal(0, sigma) if sigma > 0. else 0.
+        else:
+            lam = self.eps * np.cos(self.omega_a * t)
+            noise = 0.
+
+        return [-lam * y[0] + self.omega_e * y[1] + noise, -self.omega_e * y[0]]
+
+
+    def integrate_PROmodel(self, sigma = 0.04):
+        
+        # initial conditions
+        temp = []
+        y0 = [0., 1.35]
+        temp.append(y0[0])  
+        t0 = 0.
+        dt = 1.
+
+        if not self.damped:
+            time = 60
+            ### SciPy integrator - R-K order 4
+            r = integrate.ode(self._PRO_model).set_integrator('dopri5')
+            r.set_initial_value(y0, t0)
+            r.set_f_params(False)
+            while r.successful and r.t < time * self.year:
+                r.integrate(r.t + dt)
+                temp.append(r.y[0])
+
+            temp = np.array(temp[:-1])
+            ts = []
+
+            for i in range(time * 12):
+                ts.append(np.mean(temp[i*30:(i+1)*30]))
+
+        else:
+            time = 200
+            ### Euler-Maruyama integrator
+            t_tmp = t0
+            y = np.zeros((int(time*self.year), 2))
+            y[0, :] = y0
+            for i in range(1, int(time*self.year)):
+                y[i, 0] = y[i-1, 0] + dt * self._PRO_model(t_tmp, y[i-1, :], self.damped, sigma = sigma)[0]
+                y[i, 1] = y[i-1, 1] + dt * self._PRO_model(t_tmp, y[i-1, :], self.damped, sigma = sigma)[1]
+                t_tmp += dt
+
+            temp = y[140*self.year:, 0]
+
+            ts = []
+
+            for i in range(60 * 12):
+                ts.append(np.mean(temp[i*30:(i+1)*30]))
+
+        self.time_series = np.array(ts)
+        return np.array(ts)
+
+
 year = 360. # 1 year as 360 days -- 12*30
-DAMPED = True
-SIGMA = 0.2
+DAMPED = False
 STATS = True
-ENSO_PER = 4.75
+subtit = ""
+start_y = 0
+end_y = 60
 
-subtit = " -- ENSO period $\omega_{e}$ = $%syr^{-1}$" % str(ENSO_PER)
-# subtit = ""
-
-
-def PRO_model(t, y, damped = False):
-
-    if damped:
-        lam = lam0 + eps * np.cos(omega_a * t)
-        noise = np.random.normal(0, SIGMA) if SIGMA > 0. else 0.
-    else:
-        lam = eps * np.cos(omega_a * t)
-        noise = 0.
-
-    return [-lam * y[0] + omega_e * y[1] + noise, -omega_e * y[0]]
-
-
-## params
-twopi = 2*np.pi
-# annual frequency
-omega_a = twopi / year
-# omega_a = 1. / (((2*np.pi) / 12) / 30)
-# print omega_a
-# enso period
-omega_e = twopi / (ENSO_PER * year)
-start_y = 40
-end_y = 100
-# modulation
-eps = 2*np.pi / (2. * year)
-# if damped, parameter of damping
-lam0 = twopi / (0.4 * year)
-
-mod = []
-
-temp = []
-y0 = [0., 1.35]
-
-temp.append(y0[0])  
-t0 = 0.
-
-dt = 1.
-if not DAMPED:
-    time = 100
-    ### SciPy integrator - R-K order 4
-    r = integrate.ode(PRO_model).set_integrator('dopri5')
-    r.set_initial_value(y0, t0)
-    r.set_f_params(False)
-    while r.successful and r.t < time * year:
-        r.integrate(r.t + dt)
-        temp.append(r.y[0])
-        mod.append(eps * np.cos(omega_a * r.t))
-
-    temp = np.array(temp[:-1])
-    ts = []
-
-    for i in range(start_y*12, end_y * 12):
-        ts.append(np.mean(temp[i*30:(i+1)*30]))
-
-else:
-    time = 200
-    ### Euler-Maruyama integrator
-    t_tmp = t0
-    y = np.zeros((int(time*year), 2))
-    y[0, :] = y0
-    for i in range(1, int(time*year)):
-        y[i, 0] = y[i-1, 0] + dt * PRO_model(t_tmp, y[i-1, :], DAMPED)[0]
-        y[i, 1] = y[i-1, 1] + dt * PRO_model(t_tmp, y[i-1, :], DAMPED)[1]
-        t_tmp += dt
-
-    temp = y[140*year:, 0]
-
-    ts = []
-
-    for i in range(60 * 12):
-        ts.append(np.mean(temp[i*30:(i+1)*30]))
-
-
-ts = np.array(ts)
-# print np.var(ts)
-# print np.std(ts)
+enso = ENSO_PROmodel()
+enso.integrate_PROmodel()
+ts = enso.time_series
 
 hilb = np.imag(hilbert(ts))
 if STATS:
