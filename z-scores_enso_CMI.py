@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 from multiprocessing import Process, Queue
 import sys
 sys.path.append('/home/nikola/Work/phd/multi-scale')
+sys.path.append('/home/nikola/Work/phd/mutual_information')
 
-import src.wavelet_analysis
-# import mutual_information
+import src.wavelet_analysis as wvlt
+import mutual_information
 from src.data_class import DataField
-from surrogates.surrogates import SurrogateField
 import cPickle
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
@@ -47,182 +47,221 @@ def phase_diff(ph1, ph2):
 
     return ph
 
+
+def get_seasonality_arbitrary(ts):
+    """
+    assumes monthly data
+    outputs as DataField.get_seasonality() function
+    """
+
+    mean = np.zeros_like(ts)
+    std = np.zeros_like(ts)
+
+    for i in range(12):
+        sel = slice(i, ts.shape[0], 12)
+        mean[sel] = np.nanmean(ts[sel], axis = 0)
+        ts[sel] -= mean[sel]
+
+        std[sel] = np.nanstd(ts[sel], axis = 0, ddof = 1)
+        std[std == 0.] = 1.
+        ts[sel] /= std[sel]
+
+    return ts, (mean, std, None)
+
+
+
 DATA = "PRO" # "nino34" or "PRO"
 SPAN = [0.5, 7.5] # in years
-NUM_SURR = 100
-WRKRS = 4
+NUM_SURR = 1000
+WRKRS = 3
 ALG = 'EQQ2'
 BINS = 4
 
 if DATA == "nino34":
-    from surrogates.surrogates import SurrogateField
     enso = load_enso_SSTs()
 elif DATA == "PRO":
     from parametric_recharge_oscillator import ENSO_PROmodel
-    enso = ENSO_PROmodel(length = 1024, daily = False, damped = True, ENSOperiod = 3.75, modulation = 2, lambda0 = 0.4)
-    enso.integrate_PROmodel(sigma = 0.2)
+    enso = ENSO_PROmodel(length = 16408, daily = False, damped = False, ENSOperiod = 3.75, modulation = 2, lambda0 = 0.4)
+    enso.integrate_PROmodel()
 
 
+## annual phase
+k0 = 6. # wavenumber of Morlet wavelet used in analysis
+y = 12 # year in months
+fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + np.power(k0,2)))
+period = y # frequency of interest
+s0 = period / fourier_factor # get scale
+wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = s0, j1 = 0, k0 = k0)
+phaseAnn = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
 
+## other scales
+scales = np.arange(SPAN[0]*y, SPAN[1]*y+1, 1)
+MI = []
+CMI1 = []
+CMI2 = []
 
-# ## annual phase
-# k0 = 6. # wavenumber of Morlet wavelet used in analysis
-# y = 12 # year in months
-# fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + np.power(k0,2)))
-# period = y # frequency of interest
-# s0 = period / fourier_factor # get scale
-# wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = s0, j1 = 0, k0 = k0)
-# phaseAnn = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+print("Estimating MI // CMI on data...")
 
-# ## other scales
-# scales = np.arange(SPAN[0]*y, SPAN[1]*y+1, 1)
-# MI = []
-# CMI1 = []
-# CMI2 = []
-
-# print("Estimating MI // CMI on data...")
-
-# for sc in scales:
-#     s_temp = sc / fourier_factor # get scale
-#     wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = s_temp, j1 = 0, k0 = k0)
-#     phase_temp = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+for sc in scales:
+    s_temp = sc / fourier_factor # get scale
+    wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = s_temp, j1 = 0, k0 = k0)
+    phase_temp = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
  
-#     # MI
-#     MI.append(mutual_information.mutual_information(phase_temp, phaseAnn, algorithm = ALG, bins = BINS))
+    # MI
+    MI.append(mutual_information.mutual_information(phase_temp, phaseAnn, algorithm = ALG, bins = BINS))
 
-#     for tau in range(1, 6):
-#         condMI1 = []
-#         condMI2 = []
+    for tau in range(1, 6):
+        condMI1 = []
+        condMI2 = []
 
-#         condMI1.append(mutual_information.cond_mutual_information(phase_temp[:-tau], phase_diff(phaseAnn[tau:], phaseAnn[:-tau]), 
-#             phaseAnn[:-tau], algorithm = ALG, bins = BINS))
-#         condMI2.append(mutual_information.cond_mutual_information(phaseAnn[:-tau], phase_diff(phase_temp[tau:], phase_temp[:-tau]), 
-#             phase_temp[:-tau], algorithm = ALG, bins = BINS))
+        condMI1.append(mutual_information.cond_mutual_information(phase_temp[:-tau], phase_diff(phaseAnn[tau:], phaseAnn[:-tau]), 
+            phaseAnn[:-tau], algorithm = ALG, bins = BINS))
+        condMI2.append(mutual_information.cond_mutual_information(phaseAnn[:-tau], phase_diff(phase_temp[tau:], phase_temp[:-tau]), 
+            phase_temp[:-tau], algorithm = ALG, bins = BINS))
 
-#     CMI1.append(np.mean(np.array(condMI1)))
-#     CMI2.append(np.mean(np.array(condMI2)))
+    CMI1.append(np.mean(np.array(condMI1)))
+    CMI2.append(np.mean(np.array(condMI2)))
 
-# MI = np.array(MI)
-# CMI1 = np.array(CMI1)
-# CMI2 = np.array(CMI2)
-
-# print("Data done. Estimating on %d surrogates using %d workers..." % (NUM_SURR, WRKRS))
+MI = np.array(MI)
+CMI1 = np.array(CMI1)
+CMI2 = np.array(CMI2)
 
 
-# def _mi_surrs(sg, a, scales, phaseAnn, jobq, resq):
-#     mean, var, _ = a
-#     while jobq.get() is not None:
-#         sg.construct_fourier_surrogates_spatial()
-#         sg.add_seasonality(mean, var, None)
+print("Data done. Estimating on %d surrogates using %d workers..." % (NUM_SURR, WRKRS))
 
 
-#         surrMI = []
-#         surrCMI1 = []
-#         surrCMI2 = []
+def _mi_surrs(sg, a, scales, phaseAnn, jobq, resq):
+    mean, var, _ = a
+    while jobq.get() is not None:
+        if DATA == "nino34":
+            sg.construct_fourier_surrogates_spatial()
+            sg.add_seasonality(mean, var, None)
+            surrogate = sg.surr_data.copy()
+        elif DATA == "PRO":
+            surrogate = get_single_FT_surrogate(sg)
+            surrogate *= var
+            surrogate += mean
 
-#         for sc in scales:
-#             s_temp = sc / fourier_factor # get scale
-#             wave, _, _, _ = wavelet_analysis.continous_wavelet(sg.surr_data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = s_temp, j1 = 0, k0 = k0)
-#             phase_tempSurr = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+        surrMI = []
+        surrCMI1 = []
+        surrCMI2 = []
 
-#             surrMI.append(mutual_information.mutual_information(phase_tempSurr, phaseAnn, algorithm = 'EQQ', bins = BINS))
+        for sc in scales:
+            s_temp = sc / fourier_factor # get scale
+            wave, _, _, _ = wvlt.continous_wavelet(surrogate, 1, False, wvlt.morlet, dj = 0, s0 = s_temp, j1 = 0, k0 = k0)
+            phase_tempSurr = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
 
-#             for tau in range(1, 6):
-#                 condMI1 = []
-#                 condMI2 = []
+            surrMI.append(mutual_information.mutual_information(phase_tempSurr, phaseAnn, algorithm = 'EQQ', bins = BINS))
 
-#                 condMI1.append(mutual_information.cond_mutual_information(phase_tempSurr[:-tau], phase_diff(phaseAnn[tau:], phaseAnn[:-tau]), 
-#                     phaseAnn[:-tau], algorithm = ALG, bins = BINS))
-#                 condMI2.append(mutual_information.cond_mutual_information(phaseAnn[:-tau], phase_diff(phase_tempSurr[tau:], phase_tempSurr[:-tau]), 
-#                     phase_tempSurr[:-tau], algorithm = ALG, bins = BINS))
+            for tau in range(1, 6):
+                condMI1 = []
+                condMI2 = []
 
-#             surrCMI1.append(np.mean(np.array(condMI1)))
-#             surrCMI2.append(np.mean(np.array(condMI2)))
+                condMI1.append(mutual_information.cond_mutual_information(phase_tempSurr[:-tau], phase_diff(phaseAnn[tau:], phaseAnn[:-tau]), 
+                    phaseAnn[:-tau], algorithm = ALG, bins = BINS))
+                condMI2.append(mutual_information.cond_mutual_information(phaseAnn[:-tau], phase_diff(phase_tempSurr[tau:], phase_tempSurr[:-tau]), 
+                    phase_tempSurr[:-tau], algorithm = ALG, bins = BINS))
 
-#         resq.put((np.array(surrMI), np.array(surrCMI1), np.array(surrCMI2)))
+            surrCMI1.append(np.mean(np.array(condMI1)))
+            surrCMI2.append(np.mean(np.array(condMI2)))
+
+        resq.put((np.array(surrMI), np.array(surrCMI1), np.array(surrCMI2)))
+
+if NUM_SURR > 0:
+    surr_completed = 0
+    from surrogates.surrogates import SurrogateField, get_single_FT_surrogate
+
+    if DATA == "PRO":
+        enso_sg, a = get_seasonality_arbitrary(enso.data)
+    elif DATA == "nino34":
+        a = enso.get_seasonality(DETREND = False)
+        enso_sg = SurrogateField()
+        enso_sg.copy_field(enso)
 
 
-# surr_completed = 0
-# a = enso.get_seasonality(DETREND = False)
-# enso_sg = SurrogateField()
-# enso_sg.copy_field(enso)
-# surrMI = np.zeros((NUM_SURR, MI.shape[0]))
-# surrCMI1 = np.zeros_like(surrMI)
-# surrCMI2 = np.zeros_like(surrMI)
-# jobq = Queue()
-# resq = Queue()
-# for i in range(NUM_SURR):
-#     jobq.put(1)
-# for i in range(WRKRS):
-#     jobq.put(None)
+    surrMI = np.zeros((NUM_SURR, MI.shape[0]))
+    surrCMI1 = np.zeros_like(surrMI)
+    surrCMI2 = np.zeros_like(surrMI)
+    jobq = Queue()
+    resq = Queue()
+    for i in range(NUM_SURR):
+        jobq.put(1)
+    for i in range(WRKRS):
+        jobq.put(None)
 
-# wrkrs = [Process(target=_mi_surrs, args = (enso_sg, a, scales, phaseAnn, jobq, resq)) for i in range(WRKRS)]
-# for w in wrkrs:
-#     w.start()
+    wrkrs = [Process(target=_mi_surrs, args = (enso_sg, a, scales, phaseAnn, jobq, resq)) for i in range(WRKRS)]
+    for w in wrkrs:
+        w.start()
 
-# while surr_completed < NUM_SURR:
-#     mi, cmi1, cmi2 = resq.get()
-#     surrMI[surr_completed, :] = mi
-#     surrCMI1[surr_completed, :] = cmi1
-#     surrCMI2[surr_completed, :] = cmi2
-#     surr_completed += 1
+    while surr_completed < NUM_SURR:
+        mi, cmi1, cmi2 = resq.get()
+        surrMI[surr_completed, :] = mi
+        surrCMI1[surr_completed, :] = cmi1
+        surrCMI2[surr_completed, :] = cmi2
+        surr_completed += 1
 
-#     # if surr_completed % 20 == 0:
-#     print("..%d/%d surrogate done.." % (surr_completed, NUM_SURR))
+        # if surr_completed % 20 == 0:
+        print("..%d/%d surrogate done.." % (surr_completed, NUM_SURR))
 
-# for w in wrkrs:
-#     w.join()
+    for w in wrkrs:
+        w.join()
 
-# print("Surrogates done. Plotting the z-score..")
+    print("Surrogates done. Plotting the z-score..")
 
-# MIstd = np.std(surrMI, axis = 0, ddof = 1)
-# MIstd[MIstd == 0] = 1.
-# CMI1std = np.std(surrCMI1, axis = 0, ddof = 1)
-# CMI1std[CMI1std == 0] = 1.
-# CMI2std = np.std(surrCMI2, axis = 0, ddof = 1)
-# CMI2std[CMI2std == 0] = 1.
+    MIstd = np.std(surrMI, axis = 0, ddof = 1)
+    MIstd[MIstd == 0] = 1.
+    CMI1std = np.std(surrCMI1, axis = 0, ddof = 1)
+    CMI1std[CMI1std == 0] = 1.
+    CMI2std = np.std(surrCMI2, axis = 0, ddof = 1)
+    CMI2std[CMI2std == 0] = 1.
 
-# if NUM_SURR > 0:
-#     zMI = (MI - np.mean(surrMI, axis = 0)) / MIstd
-#     zCMI1 = (CMI1 - np.mean(surrCMI1, axis = 0)) / CMI1std
-#     zCMI2 = (CMI2 - np.mean(surrCMI2, axis = 0)) / CMI2std
+    if NUM_SURR > 0:
+        zMI = (MI - np.mean(surrMI, axis = 0)) / MIstd
+        zCMI1 = (CMI1 - np.mean(surrCMI1, axis = 0)) / CMI1std
+        zCMI2 = (CMI2 - np.mean(surrCMI2, axis = 0)) / CMI2std
 
-#     fname = "zCMI_NINO34SST_%dFTsurrs.bin" % (NUM_SURR) 
-#     with open(fname, 'wb') as f:
-#         cPickle.dump({'zMI' : zMI, 'zCMI1' : zCMI1, 'zCMI2' : zCMI2}, f, protocol = cPickle.HIGHEST_PROTOCOL)
+        fname = "zCMI_%sSST_%dFTsurrs.bin" % (DATA.upper(), NUM_SURR) 
+        with open(fname, 'wb') as f:
+            cPickle.dump({'zMI' : zMI, 'zCMI1' : zCMI1, 'zCMI2' : zCMI2,
+                'MI' : MI, 'CMI1' : CMI1, 'CMI2' : CMI2,
+                'surrMI' : surrMI, 'surrCMI1' : surrCMI1, 'surrCMI2' : surrCMI2}, 
+                f, protocol = cPickle.HIGHEST_PROTOCOL)
 
-# p = plt.subplot(311)
-# p.tick_params(axis='both', which='major', labelsize = 17)
-# p1, = plt.plot(scales, zMI, color = "#0059C7", linewidth = 2)
-# plt.xlim([scales[0], scales[-1]])
-# plt.ylim([-2, 11])
-# if NUM_SURR > 0:
-#  plt.axhline(y = 2., color = "#910D3E", linewidth = 0.75)
-# plt.legend([p1], ['mutual information -- phaseAnn vs. phaseOthers'])
-# plt.xticks(scales[6::12], scales[6::12] / 12)
-# # plt.title("mutual information -- phaseAnn vs. phaseOthers")
-# p = plt.subplot(313)
-# p.tick_params(axis='both', which='major', labelsize = 17)
-# p1, = plt.plot(scales, zCMI1, color = "#0059C7", linewidth = 2)
-# plt.xlim([scales[0], scales[-1]])
-# plt.ylim([-2, 18])
-# plt.legend([p1], ['conditional mutual information -- phaseOthers -> phaseAnn'])
-# plt.xticks(scales[6::12], scales[6::12] / 12)
-# if NUM_SURR > 0:
-#     plt.axhline(y = 2., color = "#910D3E", linewidth = 0.75)
-# plt.xlabel("period [years]", size = 20)
-# # plt.title("conditional mutual information -- phaseOthers -> phaseAnn")
-# p = plt.subplot(312)
-# p.tick_params(axis='both', which='major', labelsize = 17)
-# p1, = plt.plot(scales, zCMI2, color = "#0059C7", linewidth = 2)
-# plt.xlim([scales[0], scales[-1]])
-# plt.ylim([-2, 8])
-# plt.legend([p1], ['conditional mutual information -- phaseAnn -> phaseOthers'])
-# plt.xticks(scales[6::12], scales[6::12] / 12)
-# if NUM_SURR > 0:
-#     plt.axhline(y = 2., color = "#910D3E", linewidth = 0.75)
-#     plt.ylabel("z-score", size = 20)
-# # plt.title("conditional mutual information -- phaseAnn -> phaseOthers")
-# plt.suptitle("NINO3.4 SST // z-score against %d FT surrogates" % (NUM_SURR), size = 25)
-# plt.show()
-# # plt.savefig('enso_Zscore.png')
+    p = plt.subplot(311)
+    p.tick_params(axis='both', which='major', labelsize = 17)
+    p1, = plt.plot(scales, zMI, color = "#0059C7", linewidth = 2)
+    plt.xlim([scales[0], scales[-1]])
+    plt.ylim([-2, 11])
+    if NUM_SURR > 0:
+        plt.axhline(y = 2., color = "#910D3E", linewidth = 0.75)
+    plt.legend([p1], ['mutual information -- phaseAnn vs. phaseOthers'])
+    plt.xticks(scales[6::12], scales[6::12] / 12)
+    # plt.title("mutual information -- phaseAnn vs. phaseOthers")
+    p = plt.subplot(313)
+    p.tick_params(axis='both', which='major', labelsize = 17)
+    p1, = plt.plot(scales, zCMI1, color = "#0059C7", linewidth = 2)
+    plt.xlim([scales[0], scales[-1]])
+    plt.ylim([-2, 18])
+    plt.legend([p1], ['conditional mutual information -- phaseOthers -> phaseAnn'])
+    plt.xticks(scales[6::12], scales[6::12] / 12)
+    if NUM_SURR > 0:
+        plt.axhline(y = 2., color = "#910D3E", linewidth = 0.75)
+    plt.xlabel("period [years]", size = 20)
+    # plt.title("conditional mutual information -- phaseOthers -> phaseAnn")
+    p = plt.subplot(312)
+    p.tick_params(axis='both', which='major', labelsize = 17)
+    p1, = plt.plot(scales, zCMI2, color = "#0059C7", linewidth = 2)
+    plt.xlim([scales[0], scales[-1]])
+    plt.ylim([-2, 8])
+    plt.legend([p1], ['conditional mutual information -- phaseAnn -> phaseOthers'])
+    plt.xticks(scales[6::12], scales[6::12] / 12)
+    if NUM_SURR > 0:
+        plt.axhline(y = 2., color = "#910D3E", linewidth = 0.75)
+        plt.ylabel("z-score", size = 20)
+    # plt.title("conditional mutual information -- phaseAnn -> phaseOthers")
+    if DATA == "nino34":
+        plt.suptitle("NINO3.4 SST // z-score against %d FT surrogates" % (NUM_SURR), size = 25)
+    else:
+        plt.suptitle("PRO model -- neutral SST // z-score against %d FT surrogates" % (NUM_SURR), size = 25)
+    plt.show()
+    # plt.savefig('nino34_z-score_annual.png')
