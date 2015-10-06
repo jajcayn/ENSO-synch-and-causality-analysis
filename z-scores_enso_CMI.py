@@ -81,7 +81,7 @@ if DATA == "nino34":
     enso = load_enso_SSTs()
 elif DATA == "PRO":
     from parametric_recharge_oscillator import ENSO_PROmodel
-    enso = ENSO_PROmodel(length = 16408, daily = False, damped = False, ENSOperiod = 3.75, modulation = 2, lambda0 = 0.4)
+    enso = ENSO_PROmodel(length = 1024, daily = False, damped = False, ENSOperiod = 3.75, modulation = 2, lambda0 = 0.4)
     enso.integrate_PROmodel()
 
 

@@ -27,7 +27,7 @@ class ENSO_PROmodel():
         # modulation
         self.eps = 2*np.pi / (modulation * self.year)
         # if damped, parameter of damping
-        self.lam0 = twopi / (lambda0 * self.year)
+        self.lam0 = 1. / (lambda0 * self.year)
 
 
     def _PRO_model(self, t, y, damped = False, sigma = 0.04):
