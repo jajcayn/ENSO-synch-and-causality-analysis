@@ -81,7 +81,7 @@ if DATA == "nino34":
     enso = load_enso_SSTs()
 elif DATA == "PRO":
     from parametric_recharge_oscillator import ENSO_PROmodel
-    enso = ENSO_PROmodel(length = 1024, daily = False, damped = False, ENSOperiod = 3.75, modulation = 2, lambda0 = 0.4)
+    enso = ENSO_PROmodel(length = 1024, daily = False, damped = True, ENSOperiod = 3.75, modulation = 2, lambda0 = 0.4)
     enso.integrate_PROmodel()
 
 
@@ -262,6 +262,6 @@ if NUM_SURR > 0:
     if DATA == "nino34":
         plt.suptitle("NINO3.4 SST // z-score against %d FT surrogates" % (NUM_SURR), size = 25)
     else:
-        plt.suptitle("PRO model -- neutral SST // z-score against %d FT surrogates" % (NUM_SURR), size = 25)
+        plt.suptitle("PRO model -- damped SST // z-score against %d FT surrogates" % (NUM_SURR), size = 25)
     plt.show()
     # plt.savefig('nino34_z-score_annual.png')

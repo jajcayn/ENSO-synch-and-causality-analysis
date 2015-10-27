@@ -10,7 +10,7 @@ class ENSO_PROmodel():
     def __init__(self, length = 1024, damped = False, daily = False, ENSOperiod = 3.75, modulation = 2, lambda0 = 0.4):
 
         self.damped = damped
-        self.year = 360 # integration is always daily
+        self.year = 360. # integration is always daily
         self.daily = daily
         
         if self.daily:
@@ -25,9 +25,10 @@ class ENSO_PROmodel():
         # enso period
         self.omega_e = twopi / (ENSOperiod * self.year)
         # modulation
-        self.eps = 2*np.pi / (modulation * self.year)
+        # self.eps = 2*np.pi / (modulation * self.year)
+        self.eps = modulation / self.year
         # if damped, parameter of damping
-        self.lam0 = 1. / (lambda0 * self.year)
+        self.lam0 = lambda0 / self.year
 
 
     def _PRO_model(self, t, y, damped = False, sigma = 0.04):
@@ -95,14 +96,15 @@ class ENSO_PROmodel():
 
 if __name__ == "__main__":
     year = 360. # 1 year as 360 days -- 12*30
-    DAMPED = False
-    STATS = False
+    DAMPED = True
+    STATS = True
     subtit = ""
-    start_y = 0
-    end_y = 60
+    start_y = 40
+    end_y = 100
+    SIGMA = 0.04
 
-    enso = ENSO_PROmodel()
-    enso.integrate_PROmodel()
+    enso = ENSO_PROmodel(length = 100*12, damped = DAMPED, ENSOperiod = 3.75, modulation = 2, lambda0 = 0.4)
+    enso.integrate_PROmodel(sigma = SIGMA)
     ts = enso.data
     print ts.shape[0]
 
@@ -123,6 +125,9 @@ if __name__ == "__main__":
             phi_a = (2*np.pi/12) * t % (2*np.pi)
             phase_diff[t] = 2*phi_e - phi_a
 
+        ts = ts[start_y*12:end_y*12]
+        hilb = hilb[start_y*12:end_y*12]
+
 
         plt.figure(figsize=(20,16))
         if DAMPED:
@@ -133,6 +138,7 @@ if __name__ == "__main__":
         ax1.plot(ts, linewidth = 6., color = "#151618")
         ax1.plot(hilb, linewidth = 4, color = "#6B5F5C")
         ax1.axis([0, ts.shape[0], -4, 4])
+        # ax1.set_xlim([0, ts.shape[0b]])
         ax1.set_xticks(np.arange(0, ts.shape[0]+12, 60))
         ax1.set_xticklabels(np.arange(start_y, start_y+ts.shape[0]/12 + 1, 5))
         ax1.set_xlabel("time [years]", size = 25)
