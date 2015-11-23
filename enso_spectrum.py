@@ -41,6 +41,9 @@ def load_enso_SSTs(CMIP5model = None, num_ts = None, PROmodel = False):
         model = np.loadtxt('N34_CMIP5/' + fname)
         enso.data = model[:, num_ts]
 
+        # varnorm, not seasonal
+        enso.data /= np.std(enso.data, axis = 0, ddof = 1)
+
     if PROmodel:
         print("[%s] Integrating PRO model which will be used instead of ENSO SSTs..." % (str(datetime.now())))
         from parametric_recharge_oscillator import ENSO_PROmodel
