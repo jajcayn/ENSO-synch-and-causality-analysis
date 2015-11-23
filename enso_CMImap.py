@@ -9,21 +9,21 @@ import matplotlib.gridspec as gridspec
 
 COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
+use_PRO_model = True
 
 if COMPUTE:
     # Works only on Linux, change dirs if needed
-    sys.path.append('/home/nikola/Work/phd/multi-scale/src')
-    sys.path.append('/home/nikola/Work/phd/multi-scale/surrogates')
+    sys.path.append('/home/nikola/Work/phd/multi-scale')
     sys.path.append('/home/nikola/Work/phd/mutual_information')
 
-    import wavelet_analysis
+    import src.wavelet_analysis as wvlt
     import mutual_information as MI
-    from data_class import DataField
-    from surrogates import SurrogateField
+    from src.data_class import DataField
+    from surrogates.surrogates import SurrogateField
     from multiprocessing import Process, Queue
 
 
-def load_enso_SSTs(num_ts = None):
+def load_enso_SSTs(num_ts = None, PROmodel = False):
     # load enso SSTs
     print("[%s] Loading monthly ENSO SSTs..." % str(datetime.now()))
     enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
@@ -47,6 +47,13 @@ def load_enso_SSTs(num_ts = None):
         fname = CMIP5model + '.txt'
         model = np.loadtxt('N34_CMIP5/' + fname)
         enso.data = model[:, num_ts]
+
+    if PROmodel:
+        print("[%s] Integrating PRO model which will be used instead of ENSO SSTs..." % (str(datetime.now())))
+        from parametric_recharge_oscillator import ENSO_PROmodel
+        PROmodel_enso = ENSO_PROmodel(length = enso.data.shape[0], daily = False, damped = True, ENSOperiod = 3.75, modulation = 2, lambda0 = 0.4)
+        PROmodel_enso.integrate_PROmodel()
+        enso.data = PROmodel_enso.data.copy()
 
     if NUM_SURR > 0:
         a = list(enso.get_seasonality(DETREND = False))
@@ -75,7 +82,7 @@ def phase_diff(ph1, ph2):
 
 WVLT_SPAN = [5,93] # unit is month
 NUM_SURR = 100
-WRKRS = 4
+WRKRS = 3
 # BINS = 4
 bins_list = [4]
 
@@ -100,7 +107,7 @@ if COMPUTE:
                 # print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
                 #     num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
-                enso, enso_sg, seasonality = load_enso_SSTs(None)
+                enso, enso_sg, seasonality = load_enso_SSTs(None, PROmodel = use_PRO_model)
 
                 ## DATA
                 # prepare result matrices
@@ -117,12 +124,12 @@ if COMPUTE:
 
                 for i in range(phase_phase_coherence.shape[0]):
                     sc_i = scales[i] / fourier_factor
-                    wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                    wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                     phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                     
                     for j in range(phase_phase_coherence.shape[1]):
                         sc_j = scales[j] / fourier_factor
-                        wave, _, _, _ = wavelet_analysis.continous_wavelet(enso.data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                        wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                         phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                         amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
@@ -162,12 +169,12 @@ if COMPUTE:
 
                         for i in range(coh.shape[0]):
                             sc_i = sc[i] / fourier_factor
-                            wave, _, _, _ = wavelet_analysis.continous_wavelet(sg.surr_data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                            wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                             phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                             
                             for j in range(coh.shape[1]):
                                 sc_j = sc[j] / fourier_factor
-                                wave, _, _, _ = wavelet_analysis.continous_wavelet(sg.surr_data, 1, False, wavelet_analysis.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                                wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                                 phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                                 amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
@@ -230,7 +237,8 @@ if COMPUTE:
 
 
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
-                fname = ("CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
+                if use_PRO_model:
+                    fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
@@ -251,7 +259,7 @@ else:
 
         for num_ts in range(model_count):
             # fname = ("models/CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
-            fname = ("models/kNN_CMImap_k_32_3DcondN34_CanESM2ts4.bin")
+            fname = ("PROdamped-CMImap4bins3Dcond_GaussCorr.bin")
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
@@ -312,7 +320,7 @@ else:
                 i += 1
 
             # plt.savefig('models/plots/enso_phase_mi_%dbins3Dcond_%sts%d.png' % (BINS, CMIP5model, num_ts))
-            plt.savefig('kNN_CMImap_k_32_3DcondN34_CanESM2ts4.png')
+            plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
 
