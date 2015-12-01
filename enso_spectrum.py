@@ -11,7 +11,7 @@ sys.path.append('/home/nikola/Work/phd/mutual_information')
 import src.wavelet_analysis as wvlt
 import mutual_information as MI
 from src.data_class import DataField
-from surrogates.surrogates import SurrogateField
+from src.surrogates import SurrogateField
 
 
 
