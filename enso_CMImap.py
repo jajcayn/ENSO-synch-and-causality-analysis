@@ -7,9 +7,9 @@ import cPickle
 import sys
 import matplotlib.gridspec as gridspec
 
-COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
-use_PRO_model = True
+use_PRO_model = False
 
 if COMPUTE:
     # Works only on Linux, change dirs if needed
@@ -19,11 +19,11 @@ if COMPUTE:
     import src.wavelet_analysis as wvlt
     import mutual_information as MI
     from src.data_class import DataField
-    from surrogates.surrogates import SurrogateField
+    from src.surrogates import SurrogateField
     from multiprocessing import Process, Queue
 
 
-def load_enso_SSTs(num_ts = None, PROmodel = False):
+def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = False):
     # load enso SSTs
     print("[%s] Loading monthly ENSO SSTs..." % str(datetime.now()))
     enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
@@ -55,6 +55,14 @@ def load_enso_SSTs(num_ts = None, PROmodel = False):
         PROmodel_enso.integrate_PROmodel()
         enso.data = PROmodel_enso.data.copy()
 
+    if EMRmodel:
+        print("[%s] Loading EMR simulated syntethic ENSO time series..." % (str(datetime.now())))
+        import scipy.io as sio
+        raw = sio.loadmat("Nino34_observed_and_simulated.mat")['N34s']
+        raw = raw[-enso.data.shape[0]:, :] # same length as nino3.4 data
+        enso.data = raw[:, num_ts].copy()
+
+
     if NUM_SURR > 0:
         a = list(enso.get_seasonality(DETREND = False))
         enso_sg = SurrogateField()
@@ -82,15 +90,15 @@ def phase_diff(ph1, ph2):
 
 WVLT_SPAN = [5,93] # unit is month
 NUM_SURR = 1000
-WRKRS = 3
+WRKRS = 20
 # BINS = 4
 bins_list = [4]
 
 # CMIP5model = 'N34_CanESM2_0'# None for data or name of the model + _ + number of TS as more time series is available
-CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
-CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
-CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-# CMIP5models = [None]
+# CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
+# CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
+# CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
+CMIP5models = [None]
 
 if COMPUTE:
     for BINS in bins_list:
@@ -99,7 +107,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 1
+            model_count = 100
             CMIP5model = None
 
             for num_ts in range(model_count):
@@ -107,7 +115,7 @@ if COMPUTE:
                 # print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
                 #     num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
-                enso, enso_sg, seasonality = load_enso_SSTs(None, PROmodel = use_PRO_model)
+                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = True)
 
                 ## DATA
                 # prepare result matrices
@@ -239,6 +247,7 @@ if COMPUTE:
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
+                fname = ("EMRmodelCMImap%dbins3Dcond_GaussCorr%d.bin" % (BINS, num_ts))
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
