@@ -96,7 +96,7 @@ def plot_MI(MIs, data, fname = "test.png"):
 
 
 ## data
-fname = ("KNN_CMImap_k_32_3Dcond_GaussCorr.bin")
+fname = ("results/KNN_CMImap_k_32_3Dcond_GaussCorr.bin")
 data = evaluate_MI(fname)
 
 # ## models
@@ -128,7 +128,7 @@ for CMIP5model in CMIP5models:
             test.append(summed)
 
         fname = ("kNN-test%sts%d.png" % (CMIP5model, num_ts))
-        counts = plot_MI(test, data, fname = "models/plots/" + fname)
+        counts = plot_MI(test, data, fname = "models/plots/kNN/" + fname)
         numbers.append(counts)
 
 numbers = np.array(numbers)

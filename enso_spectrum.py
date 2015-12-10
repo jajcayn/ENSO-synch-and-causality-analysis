@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
@@ -101,7 +103,7 @@ for CMIP5model in CMIP5models:
     # fname = "SPECTRUM-PROdamped-ensemble100.png"
 
     for num_ts in range(model_count):
-        # print num_ts
+        print num_ts
 
         # data_type = ("CMIP5 -- %s / %d monthly data" % (CMIP5model[4:], num_ts))
         # fname = ("SPECTRUM-%s-%d.bin" % (CMIP5model[4:], num_ts))
@@ -258,7 +260,7 @@ for CMIP5model in CMIP5models:
     # ax.plot(scales2, wvlt_power2, linewidth = 4, color = "#3C0B1F", label = "phase $\phi$")
     ax.errorbar(scales2, np.mean(plt6, axis = 0), yerr = np.std(plt6, ddof = 1, axis = 0), linewidth = 4, color = "#3C0B1F")
 
-    plt.suptitle(data_type, size = 35)
+    plt.suptitle("Regression model -- 100 realisations", size = 35)
 
     # plt.savefig("spectra/" + fname)
     plt.savefig("spectra/simulatedNINO34.png")

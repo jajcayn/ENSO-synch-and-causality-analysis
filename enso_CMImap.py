@@ -81,16 +81,16 @@ def phase_diff(ph1, ph2):
     return ph
 
 WVLT_SPAN = [5,93] # unit is month
-NUM_SURR = 100
+NUM_SURR = 1000
 WRKRS = 3
 # BINS = 4
 bins_list = [4]
 
 # CMIP5model = 'N34_CanESM2_0'# None for data or name of the model + _ + number of TS as more time series is available
-# CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
-# CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
-# CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = [None]
+CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
+CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
+CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
+# CMIP5models = [None]
 
 if COMPUTE:
     for BINS in bins_list:
@@ -249,17 +249,16 @@ if COMPUTE:
 else:
     BINS = 4
     for CMIP5model in CMIP5models:
-        # fname = CMIP5model + '.txt'
-        # model = np.loadtxt('N34_CMIP5/' + fname)
-        # model_count = model.shape[1]
+        fname = CMIP5model + '.txt'
+        model = np.loadtxt('N34_CMIP5/' + fname)
+        model_count = model.shape[1]
 
         # model_count = 1
         # CMIP5model = None
-        model_count = 1
 
         for num_ts in range(model_count):
-            # fname = ("models/CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
-            fname = ("PROdamped-CMImap4bins3Dcond_GaussCorr.bin")
+            fname = ("models/kNN_CMImap_k_32_3Dcond%sts%d.bin" % (CMIP5model, num_ts))
+            # fname = ("PROdamped-CMImap4bins3Dcond_GaussCorr.bin")
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
@@ -319,8 +318,8 @@ else:
                     pass
                 i += 1
 
-            # plt.savefig('models/plots/enso_phase_mi_%dbins3Dcond_%sts%d.png' % (BINS, CMIP5model, num_ts))
-            plt.savefig('PROdamped-CMImap.png')
+            plt.savefig('models/plots/kNN/kNN_CMImap_k_32_3DcondN34_%sts%d.png' % (CMIP5model, num_ts))
+            # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
 
