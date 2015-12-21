@@ -4,7 +4,12 @@ LINEAR REGRESSION MODEL:
  ☐ kvadraticky model
  ☐ nieco na styl PRO zaviest do modelu
  ☐ multiplicative noise instead of additive
+ ☐ ostatne CMI maps pocitat na 100surr
+ ☐ vzdy rob spectrum, z-scores a CMI maps
 
 
 PRO model:
  ☐ skusit sa pohrat noise vs. damping
+
+other:
+ ☐ sprava o modeloch ku KONTAKT sprace 
