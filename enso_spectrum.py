@@ -8,10 +8,9 @@ from matplotlib.ticker import MultipleLocator, FuncFormatter
 import cPickle
 import sys
 import matplotlib.gridspec as gridspec
-sys.path.append('/home/nikola/Work/phd/multi-scale')
-sys.path.append('/home/nikola/Work/phd/mutual_information')
+sys.path.append('/Users/nikola/work-ui/multi-scale')
 import src.wavelet_analysis as wvlt
-import mutual_information as MI
+import src.mutual_information as MI
 from src.data_class import DataField
 from src.surrogates import SurrogateField
 
@@ -87,7 +86,7 @@ for CMIP5model in CMIP5models:
     # model = np.loadtxt('N34_CMIP5/' + fname)
     # model_count = model.shape[1]
     import scipy.io as sio
-    a = sio.loadmat("Nino34_observed_and_simulated.mat")
+    a = sio.loadmat("Nino34-ERM-1884-2013linear.mat")
     sim_nino = a['N34s'] # 1920 x 100 as ts length x ensemble
     model_count = sim_nino.shape[1]
     sim_nino = sim_nino[-1024:, :]
