@@ -15,11 +15,14 @@ use_PRO_model = False
 
 if COMPUTE:
     # Works only on Linux, change dirs if needed
-    sys.path.append('/home/nikola/Work/phd/multi-scale')
-    sys.path.append('/home/nikola/Work/phd/mutual_information')
+    import platform
+    if platform.system() == "Linux":
+        sys.path.append('/home/nikola/Work/phd/multi-scale')
+    elif platform.system() == "Darwin":
+        sys.path.append('/Users/nikola/work-ui/multi-scale')
 
     import src.wavelet_analysis as wvlt
-    import mutual_information as MI
+    import src.mutual_information as MI
     from src.data_class import DataField
     from src.surrogates import SurrogateField
     from multiprocessing import Process, Queue
@@ -44,6 +47,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = False):
 
     enso.time = time
     enso.location = 'NINO3.4 SSTs'
+
+    enso.select_date(date(1884,1,1), date(2014,1,1))
 
     if CMIP5model is not None and num_ts is not None:
         fname = CMIP5model + '.txt'
@@ -91,7 +96,7 @@ def phase_diff(ph1, ph2):
     return ph
 
 WVLT_SPAN = [5,93] # unit is month
-NUM_SURR = 1000
+NUM_SURR = 100
 WRKRS = 20
 # BINS = 4
 bins_list = [4]
