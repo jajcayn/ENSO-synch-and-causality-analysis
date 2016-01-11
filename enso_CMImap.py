@@ -9,7 +9,7 @@ import cPickle
 import sys
 import matplotlib.gridspec as gridspec
 
-COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = False
 
@@ -60,7 +60,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = False):
     if EMRmodel:
         print("[%s] Loading EMR simulated syntethic ENSO time series..." % (str(datetime.now())))
         import scipy.io as sio
-        raw = sio.loadmat("Nino34_observed_and_simulated.mat")['N34s']
+        raw = sio.loadmat("Nino34-ERM-1884-2013linear-same-init-cond.mat")['N34s']
         raw = raw[-enso.data.shape[0]:, :] # same length as nino3.4 data
         enso.data = raw[:, num_ts].copy()
 
