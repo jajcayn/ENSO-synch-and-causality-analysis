@@ -6,7 +6,7 @@ LINEAR REGRESSION MODEL:
  ☐ multiplicative noise instead of additive
  ☐ ostatne CMI maps pocitat na 100surr
  ☐ vzdy rob spectrum, z-scores a CMI maps
- ☐ rovnake initial conditions + iny sum
+ ✔ rovnake initial conditions + iny sum @done (16-01-08 15:19)
 
 
 PRO model:

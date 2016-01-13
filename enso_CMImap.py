@@ -9,17 +9,20 @@ import cPickle
 import sys
 import matplotlib.gridspec as gridspec
 
-COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = False
 
 if COMPUTE:
     # Works only on Linux, change dirs if needed
-    sys.path.append('/home/nikola/Work/phd/multi-scale')
-    sys.path.append('/home/nikola/Work/phd/mutual_information')
+    import platform
+    if platform.system() == "Linux":
+        sys.path.append('/home/nikola/Work/phd/multi-scale')
+    elif platform.system() == "Darwin":
+        sys.path.append('/Users/nikola/work-ui/multi-scale')
 
     import src.wavelet_analysis as wvlt
-    import mutual_information as MI
+    import src.mutual_information as MI
     from src.data_class import DataField
     from src.surrogates import SurrogateField
     from multiprocessing import Process, Queue
@@ -45,6 +48,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = False):
     enso.time = time
     enso.location = 'NINO3.4 SSTs'
 
+    enso.select_date(date(1884,1,1), date(2014,1,1))
+
     if CMIP5model is not None and num_ts is not None:
         fname = CMIP5model + '.txt'
         model = np.loadtxt('N34_CMIP5/' + fname)
@@ -60,7 +65,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = False):
     if EMRmodel:
         print("[%s] Loading EMR simulated syntethic ENSO time series..." % (str(datetime.now())))
         import scipy.io as sio
-        raw = sio.loadmat("Nino34_observed_and_simulated.mat")['N34s']
+        raw = sio.loadmat("Nino34-ERM-1884-2013linear-same-init-cond.mat")['N34s']
         raw = raw[-enso.data.shape[0]:, :] # same length as nino3.4 data
         enso.data = raw[:, num_ts].copy()
 
@@ -91,7 +96,7 @@ def phase_diff(ph1, ph2):
     return ph
 
 WVLT_SPAN = [5,93] # unit is month
-NUM_SURR = 1000
+NUM_SURR = 100
 WRKRS = 20
 # BINS = 4
 bins_list = [4]
