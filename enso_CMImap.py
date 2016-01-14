@@ -334,7 +334,7 @@ else:
                     pass
                 i += 1
 
-            plt.savefig('plots/EMR/EMR1854-2013linear-CMImap4bin%d.png' % (num_ts))
+            plt.savefig('plots/ERM1854-2013linear-CMImap4bin%d.png' % (num_ts))
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
