@@ -9,7 +9,7 @@ import cPickle
 import sys
 import matplotlib.gridspec as gridspec
 
-COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = False
 
@@ -273,7 +273,7 @@ else:
         # CMIP5model = None
 
         for num_ts in range(model_count):
-            fname = ("models/EMRmodelCMImap4bins3Dcond_GaussCorr%d.bin" % (num_ts))
+            fname = ("bins/EMRmodelCMImap4bins3Dcond_GaussCorr%d.bin" % (num_ts))
             # fname = ("PROdamped-CMImap4bins3Dcond_GaussCorr.bin")
             CUT = slice(0,NUM_SURR)
             # version = 3
@@ -334,7 +334,7 @@ else:
                     pass
                 i += 1
 
-            plt.savefig('models/plots/EMR/EMR-CMImap4bin3Dcond%d.png' % (num_ts))
+            plt.savefig('plots/EMR/EMR1854-2013linear-CMImap4bin%d.png' % (num_ts))
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
