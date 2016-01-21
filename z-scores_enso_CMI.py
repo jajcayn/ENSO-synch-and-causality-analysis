@@ -244,7 +244,7 @@ for model_no in range(100):
         p = plt.subplot(311)
         p.tick_params(axis='both', which='major', labelsize = 17)
         p1, = plt.plot(scales, zMI, color = "#0059C7", linewidth = 2)
-        print zMI.shape
+        # print zMI.shape
         plt.xlim([scales[0], scales[-1]])
         plt.ylim([-2, 11])
         if NUM_SURR > 0:
