@@ -2,7 +2,7 @@ LINEAR REGRESSION MODEL:
  ✔ skus na uz hotovych CMI mapy - asi tam nebude nic @done (15-12-15 15:13)
  ✔ neodstranovat rocny cyklus - no anomalies pred EOF @done (16-01-14 22:18)
  ☐ kvadraticky model
- ☐ nieco na styl PRO zaviest do modelu
+ ✘ nieco na styl PRO zaviest do modelu @cancelled (16-01-19 16:30)
  ☐ multiplicative noise instead of additive
  ✔ ostatne CMI maps pocitat na 100surr @done (16-01-14 22:18)
  ✔ vzdy rob spectrum, z-scores a CMI maps @done (16-01-14 22:18)

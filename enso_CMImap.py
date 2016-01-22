@@ -9,7 +9,7 @@ import cPickle
 import sys
 import matplotlib.gridspec as gridspec
 
-COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = False
 
@@ -65,7 +65,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = False):
     if EMRmodel:
         print("[%s] Loading EMR simulated syntethic ENSO time series..." % (str(datetime.now())))
         import scipy.io as sio
-        raw = sio.loadmat("Nino34-ERM-1884-2013linear-same-init-cond.mat")['N34s']
+        raw = sio.loadmat("Nino34-ERM-1884-2013quadratic-21PCs-sigma0.2.mat")['N34s']
         raw = raw[-enso.data.shape[0]:, :] # same length as nino3.4 data
         enso.data = raw[:, num_ts].copy()
 
@@ -254,7 +254,7 @@ if COMPUTE:
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
-                fname = ("EMRmodelCMImap%dbins3Dcond_GaussCorr%d.bin" % (BINS, num_ts))
+                fname = ("ERM1884-2013quad21PCs_CMImap4bins3Dcond%d.bin" % (num_ts))
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
@@ -273,7 +273,7 @@ else:
         # CMIP5model = None
 
         for num_ts in range(model_count):
-            fname = ("bins/EMRmodelCMImap4bins3Dcond_GaussCorr%d.bin" % (num_ts))
+            fname = ("bins/ERM1884-2013quad21PCs_CMImap4bins3Dcond%d.bin" % (num_ts))
             # fname = ("PROdamped-CMImap4bins3Dcond_GaussCorr.bin")
             CUT = slice(0,NUM_SURR)
             # version = 3
