@@ -42,7 +42,7 @@ def load_enso_SSTs(emr = False, num_ts = 0):
     if emr:
         import scipy.io as sio
         print("using synthetic time series from ERM number %d" % (num_ts+1))
-        raw = sio.loadmat("Nino34-ERM-1884-2013quadratic-21PCs-sigma0.2.mat")['N34s']
+        raw = sio.loadmat("Nino34-ERM-1884-2013quadratic-135PCs-sigma0.04.mat")['N34s']
         enso.data = raw[-1024:, num_ts]
 
     print("[%s] Data loaded with shape %s" % (str(datetime.now()), enso.data.shape))
@@ -233,7 +233,7 @@ for model_no in range(100):
             zCMI1 = (CMI1 - np.mean(surrCMI1, axis = 0)) / CMI1std
             zCMI2 = (CMI2 - np.mean(surrCMI2, axis = 0)) / CMI2std
 
-            fname = "bins/zCMI_%sSST_%dFTsurrs_-quad21PCs-TSno%d.bin" % (DATA.upper(), NUM_SURR, model_no) 
+            fname = "bins/zCMI_%sSST_%dFTsurrs_-quad135PCs-TSno%d.bin" % (DATA.upper(), NUM_SURR, model_no) 
             with open(fname, 'wb') as f:
                 cPickle.dump({'zMI' : zMI, 'zCMI1' : zCMI1, 'zCMI2' : zCMI2,
                     'MI' : MI, 'CMI1' : CMI1, 'CMI2' : CMI2,
@@ -281,5 +281,5 @@ for model_no in range(100):
         elif DATA == "PRO":
             plt.suptitle("PRO model -- damped SST // z-score against %d FT surrogates" % (NUM_SURR), size = 25)
         # plt.show()
-        plt.savefig('plots/ERM1884-2013quad21PCs_z-score_annual%d.png' % (model_no))
+        plt.savefig('plots/ERM1884-2013quad135PCs_z-score_annual%d.png' % (model_no))
         plt.close()

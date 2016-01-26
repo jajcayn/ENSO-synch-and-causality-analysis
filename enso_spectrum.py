@@ -86,7 +86,7 @@ for CMIP5model in CMIP5models:
     # model = np.loadtxt('N34_CMIP5/' + fname)
     # model_count = model.shape[1]
     import scipy.io as sio
-    a = sio.loadmat("Nino34-ERM-1884-2013quadratic-21PCs-sigma0.2.mat")
+    a = sio.loadmat("Nino34-ERM-1884-2013quadratic-135PCs-sigma0.04.mat")
     sim_nino = a['N34s'] # 1920 x 100 as ts length x ensemble
     model_count = sim_nino.shape[1]
     sim_nino = sim_nino[-1024:, :]
