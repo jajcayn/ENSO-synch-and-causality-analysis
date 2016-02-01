@@ -19,7 +19,8 @@ def load_enso_SSTs(emr = False, num_ts = 0):
     enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
     enso = DataField()
 
-    enso.data = enso_raw[:, 1]
+    # enso.data = enso_raw[:, 1]
+    enso.data = np.zeros((65520,))
 
     time = np.zeros_like(enso.data, dtype = np.int32)
     y = np.int(enso_raw[0, 0])
@@ -37,13 +38,13 @@ def load_enso_SSTs(emr = False, num_ts = 0):
     print enso.get_date_from_ndx(0), enso.get_date_from_ndx(-1)
 
     # select 1024 data points
-    enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = True)
+    # enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = True)
 
     if emr:
         import scipy.io as sio
         print("using synthetic time series from ERM number %d" % (num_ts+1))
-        raw = sio.loadmat("Nino34-ERM-1884-2013quadratic-135PCs-sigma0.04.mat")['N34s']
-        enso.data = raw[-1024:, num_ts]
+        raw = sio.loadmat("Nino34-ERM-1884-2013quadratic-135PCs65520.mat")['N34s']
+        enso.data = raw[:, num_ts]
 
     print("[%s] Data loaded with shape %s" % (str(datetime.now()), enso.data.shape))
 
@@ -81,14 +82,14 @@ def get_seasonality_arbitrary(ts):
 def _mi_surrs(sg, a, scales, phaseAnn, jobq, resq):
     mean, var, _ = a
     while jobq.get() is not None:
-        if "nino34" in DATA:
-            sg.construct_fourier_surrogates_spatial()
-            sg.add_seasonality(mean, var, None)
-            surrogate = sg.surr_data.copy()
-        elif DATA == "PRO":
+        if DATA == "PRO" or DATA == "nino34ERM":
             surrogate = get_single_FT_surrogate(sg)
             surrogate *= var
             surrogate += mean
+        else:    
+            sg.construct_fourier_surrogates_spatial()
+            sg.add_seasonality(mean, var, None)
+            surrogate = sg.surr_data.copy()
 
         surrMI = []
         surrCMI1 = []
@@ -120,11 +121,11 @@ def _mi_surrs(sg, a, scales, phaseAnn, jobq, resq):
 DATA = "nino34ERM" # "nino34" or "PRO"
 SPAN = [0.5, 7.5] # in years
 NUM_SURR = 100
-WRKRS = 7
+WRKRS = 5
 ALG = 'EQQ2'
 BINS = 4
 
-for model_no in range(100):
+for model_no in range(20):
 
     if DATA == "nino34":
         enso = load_enso_SSTs()
@@ -177,20 +178,18 @@ for model_no in range(100):
     CMI1 = np.array(CMI1)
     CMI2 = np.array(CMI2)
 
-
     print("Data done. Estimating on %d surrogates using %d workers..." % (NUM_SURR, WRKRS))
 
     if NUM_SURR > 0:
         surr_completed = 0
         from src.surrogates import SurrogateField, get_single_FT_surrogate
 
-        if DATA == "PRO":
+        if DATA == "PRO" or DATA == "nino34ERM":
             enso_sg, a = get_seasonality_arbitrary(enso.data)
-        elif "nino34" in DATA:
+        else:
             a = enso.get_seasonality(DETREND = False)
             enso_sg = SurrogateField()
             enso_sg.copy_field(enso)
-
 
         surrMI = np.zeros((NUM_SURR, MI.shape[0]))
         surrCMI1 = np.zeros_like(surrMI)
@@ -233,14 +232,14 @@ for model_no in range(100):
             zCMI1 = (CMI1 - np.mean(surrCMI1, axis = 0)) / CMI1std
             zCMI2 = (CMI2 - np.mean(surrCMI2, axis = 0)) / CMI2std
 
-            fname = "bins/zCMI_%sSST_%dFTsurrs_-quad135PCs-TSno%d.bin" % (DATA.upper(), NUM_SURR, model_no) 
+            fname = "bins/zCMI_%sSST_%dFTsurrs-quad135PCs-long-TSno%d.bin" % (DATA.upper(), NUM_SURR, model_no) 
             with open(fname, 'wb') as f:
                 cPickle.dump({'zMI' : zMI, 'zCMI1' : zCMI1, 'zCMI2' : zCMI2,
                     'MI' : MI, 'CMI1' : CMI1, 'CMI2' : CMI2,
                     'surrMI' : surrMI, 'surrCMI1' : surrCMI1, 'surrCMI2' : surrCMI2}, 
                     f, protocol = cPickle.HIGHEST_PROTOCOL)
 
-        plt.figure()
+        plt.figure(figsize=(15,10))
         p = plt.subplot(311)
         p.tick_params(axis='both', which='major', labelsize = 17)
         p1, = plt.plot(scales, zMI, color = "#0059C7", linewidth = 2)
@@ -281,5 +280,5 @@ for model_no in range(100):
         elif DATA == "PRO":
             plt.suptitle("PRO model -- damped SST // z-score against %d FT surrogates" % (NUM_SURR), size = 25)
         # plt.show()
-        plt.savefig('plots/ERM1884-2013quad135PCs_z-score_annual%d.png' % (model_no))
+        plt.savefig('plots/ERM1884-2013-quad135PCs-long_z-score_annual%d.png' % (model_no))
         plt.close()
