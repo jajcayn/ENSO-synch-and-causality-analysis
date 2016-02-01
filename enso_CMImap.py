@@ -16,7 +16,7 @@ use_PRO_model = False
 if COMPUTE:
     import platform
     if platform.system() == "Linux":
-        sys.path.append('/home/nikola/Work/multi-scale')
+        sys.path.append('/home/nikola/Work/phd/multi-scale')
     elif platform.system() == "Darwin":
         sys.path.append('/Users/nikola/work-ui/multi-scale')
 
@@ -124,8 +124,8 @@ if COMPUTE:
 
                 enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = True)
 
-                # DATA
-                prepare result matrices
+                ## DATA
+                #prepare result matrices
                 k0 = 6. # wavenumber of Morlet wavelet used in analysis
                 y = 12 # year in months
                 fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + np.power(k0,2)))
