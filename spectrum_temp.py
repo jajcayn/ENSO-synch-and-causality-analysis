@@ -86,7 +86,7 @@ for CMIP5model in CMIP5models:
     # model = np.loadtxt('N34_CMIP5/' + fname)
     # model_count = model.shape[1]
     import scipy.io as sio
-    a = sio.loadmat("Nino34-ERM-1884-2013linear-%s.mat" % CMIP5model)
+    a = sio.loadmat("Nino34-ERM-1884-2013quad135-%s.mat" % CMIP5model)
     sim_nino = a['N34s'] # 1920 x 100 as ts length x ensemble
     model_count = sim_nino.shape[1]
     if CMIP5model == '4k':
@@ -269,5 +269,5 @@ for CMIP5model in CMIP5models:
     plt.suptitle("Regression model -- 100 realisations", size = 35)
 
     # plt.savefig("spectra/" + fname)
-    plt.savefig("spectra/Nino34-ERM-linear%s.png" % CMIP5model)
+    plt.savefig("spectra/Nino34-ERM-quad%s.png" % CMIP5model)
 
