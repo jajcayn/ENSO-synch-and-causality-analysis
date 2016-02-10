@@ -14,7 +14,6 @@ CMIP5model = None # None for data or name of the model + _ + number of TS as mor
 use_PRO_model = False
 
 if COMPUTE:
-    # Works only on Linux, change dirs if needed
     import platform
     if platform.system() == "Linux":
         sys.path.append('/home/nikola/Work/phd/multi-scale')
@@ -34,7 +33,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = False):
     enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
     enso = DataField()
 
-    enso.data = enso_raw[:, 1]
+    # enso.data = enso_raw[:, 1]
+    enso.data = np.zeros((65520,))
 
     time = np.zeros_like(enso.data, dtype = np.int32)
     y = np.int(enso_raw[0, 0])
@@ -48,7 +48,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = False):
     enso.time = time
     enso.location = 'NINO3.4 SSTs'
 
-    enso.select_date(date(1884,1,1), date(2014,1,1))
+    # enso.select_date(date(1884,1,1), date(2014,1,1))
 
     if CMIP5model is not None and num_ts is not None:
         fname = CMIP5model + '.txt'
@@ -65,8 +65,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = False):
     if EMRmodel:
         print("[%s] Loading EMR simulated syntethic ENSO time series..." % (str(datetime.now())))
         import scipy.io as sio
-        raw = sio.loadmat("Nino34-ERM-1884-2013quadratic-135PCs-sigma0.04.mat")['N34s']
-        raw = raw[-enso.data.shape[0]:, :] # same length as nino3.4 data
+        raw = sio.loadmat("Nino34-ERM-1884-2013linear-same-init-cond65520.mat")['N34s']
+        # raw = raw[:, :] # same length as nino3.4 data
         enso.data = raw[:, num_ts].copy()
 
 
@@ -74,17 +74,17 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = False):
         a = list(enso.get_seasonality(DETREND = False))
         enso_sg = SurrogateField()
 
-        _, _, idx = enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = False)
+        # _, _, idx = enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = False)
         enso_sg.copy_field(enso)
-        enso_sg.data = enso_sg.data[idx[0]:idx[1]]
+        # enso_sg.data = enso_sg.data[idx[0]:idx[1]]
 
         enso.return_seasonality(a[0], a[1], None)
 
-        a[0] = a[0][idx[0]:idx[1]]
-        a[1] = a[1][idx[0]:idx[1]]
+        # a[0] = a[0][idx[0]:idx[1]]
+        # a[1] = a[1][idx[0]:idx[1]]
 
     # select 1024 data points
-    enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = True)
+    # enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = True)
     print("[%s] Data loaded with shape %s" % (str(datetime.now()), enso.data.shape))
 
     return enso, enso_sg, a
@@ -97,7 +97,7 @@ def phase_diff(ph1, ph2):
 
 WVLT_SPAN = [5,93] # unit is month
 NUM_SURR = 100
-WRKRS = 10
+WRKRS = 20
 # BINS = 4
 bins_list = [4]
 
@@ -114,7 +114,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 100
+            model_count = 20
             CMIP5model = None
 
             for num_ts in range(model_count):
@@ -125,7 +125,7 @@ if COMPUTE:
                 enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = True)
 
                 ## DATA
-                # prepare result matrices
+                #prepare result matrices
                 k0 = 6. # wavenumber of Morlet wavelet used in analysis
                 y = 12 # year in months
                 fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + np.power(k0,2)))
@@ -254,7 +254,7 @@ if COMPUTE:
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
-                fname = ("ERM1884-2013quad135PCs_CMImap4bins3Dcond%d.bin" % (num_ts))
+                fname = ("ERM1884-2013-SIC-long_CMImap4bins3Dcond%d.bin" % (num_ts))
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
