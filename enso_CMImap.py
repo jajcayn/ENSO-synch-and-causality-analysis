@@ -9,7 +9,7 @@ import cPickle
 import sys
 import matplotlib.gridspec as gridspec
 
-COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = False
 
@@ -123,12 +123,12 @@ if COMPUTE:
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
             model_count = 5
-            CMIP5model = None
+            # CMIP5model = None
 
             for num_ts in range(model_count):
 
-                # print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
-                #     num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
+                print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
+                    num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
                 enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
 
