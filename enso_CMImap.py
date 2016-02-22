@@ -34,7 +34,15 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     enso = DataField()
 
     # enso.data = enso_raw[:, 1]
-    enso.data = np.zeros((65520,))
+    # enso.data = np.zeros((65520,))
+    if '4k' in EMRmodel:
+        enso.data = np.zeros((4096,))
+    elif '8k' in EMRmodel:  
+        enso.data = np.zeros((8192,))
+    elif '16k' in EMRmodel:
+        enso.data = np.zeros((16384,))
+    elif '32k' in EMRmodel:
+        enso.data = np.zeros((32768,))
 
     time = np.zeros_like(enso.data, dtype = np.int32)
     y = np.int(enso_raw[0, 0])
