@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from multiprocessing import Process, Queue
 import sys
-# sys.path.append('/home/nikola/Work/multi-scale')
-sys.path.append('/Users/nikola/work-ui/multi-scale')
+sys.path.append('/home/nikola/Work/multi-scale')
+# sys.path.append('/Users/nikola/work-ui/multi-scale')
 import src.wavelet_analysis as wvlt
 import src.mutual_information as mutual_information
 from src.data_class import DataField
@@ -43,8 +43,8 @@ def load_enso_SSTs(emr = False, num_ts = 0):
     if emr:
         import scipy.io as sio
         print("using synthetic time series from ERM number %d" % (num_ts+1))
-        raw = sio.loadmat("Nino34-ERM-1884-2013quadratic-135PCs65520.mat")['N34s']
-        enso.data = raw[-1024:, num_ts]
+        raw = sio.loadmat("Nino34-ERM-1884-2013linear-32k.mat")['N34s']
+        enso.data = raw[-32768:, num_ts]
 
     print("[%s] Data loaded with shape %s" % (str(datetime.now()), enso.data.shape))
 
@@ -121,7 +121,7 @@ def _mi_surrs(sg, a, scales, phaseAnn, jobq, resq):
 DATA = "nino34ERM" # "nino34" or "PRO"
 SPAN = [0.5, 7.5] # in years
 NUM_SURR = 100
-WRKRS = 5
+WRKRS = 3
 ALG = 'EQQ2'
 BINS = 4
 
@@ -232,7 +232,7 @@ for model_no in range(20):
             zCMI1 = (CMI1 - np.mean(surrCMI1, axis = 0)) / CMI1std
             zCMI2 = (CMI2 - np.mean(surrCMI2, axis = 0)) / CMI2std
 
-            fname = "bins/zCMI_%sSST_%dFTsurrs-quad135PCs-long20000end-TSno%d.bin" % (DATA.upper(), NUM_SURR, model_no) 
+            fname = "bins/zCMI_%sSST_%dFTsurrs-linear-32k-TSno%d.bin" % (DATA.upper(), NUM_SURR, model_no) 
             with open(fname, 'wb') as f:
                 cPickle.dump({'zMI' : zMI, 'zCMI1' : zCMI1, 'zCMI2' : zCMI2,
                     'MI' : MI, 'CMI1' : CMI1, 'CMI2' : CMI2,
@@ -280,5 +280,5 @@ for model_no in range(20):
         elif DATA == "PRO":
             plt.suptitle("PRO model -- damped SST // z-score against %d FT surrogates" % (NUM_SURR), size = 25)
         # plt.show()
-        plt.savefig('plots/ERM1884-2013-quad135PCs-long-20000end_z-score_annual%d.png' % (model_no))
+        plt.savefig('plots/ERM1884-2013-linear-32k_z-score_annual%d.png' % (model_no))
         plt.close()

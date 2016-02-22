@@ -9,7 +9,7 @@ import cPickle
 import sys
 import matplotlib.gridspec as gridspec
 
-COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = False
 
@@ -27,7 +27,7 @@ if COMPUTE:
     from multiprocessing import Process, Queue
 
 
-def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = False):
+def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     # load enso SSTs
     print("[%s] Loading monthly ENSO SSTs..." % str(datetime.now()))
     enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
@@ -62,12 +62,19 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = False):
         PROmodel_enso.integrate_PROmodel()
         enso.data = PROmodel_enso.data.copy()
 
-    if EMRmodel:
+    if EMRmodel is not None:
         print("[%s] Loading EMR simulated syntethic ENSO time series..." % (str(datetime.now())))
         import scipy.io as sio
-        raw = sio.loadmat("Nino34-ERM-1884-2013linear-same-init-cond65520.mat")['N34s']
+        raw = sio.loadmat("Nino34-ERM-1884-2013%s.mat" % (EMRmodel))['N34s']
         # raw = raw[:, :] # same length as nino3.4 data
-        enso.data = raw[:, num_ts].copy()
+        if '4k' in EMRmodel:
+            enso.data = raw[-4096:, num_ts].copy()
+        elif '8k' in EMRmodel:  
+            enso.data = raw[-8192:, num_ts].copy()
+        elif '16k' in EMRmodel:
+            enso.data = raw[-16384:, num_ts].copy()
+        elif '32k' in EMRmodel:
+            enso.data = raw[-32768:, num_ts].copy()
 
 
     if NUM_SURR > 0:
@@ -105,7 +112,8 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = [None]
+CMIP5models = ['linear-4k', 'quad135-4k', 'linear-8k', 'quad135-8k', 
+                'linear-16k', 'quad135-16k', 'quad135-16k', 'linear-32k']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -114,7 +122,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 20
+            model_count = 5
             CMIP5model = None
 
             for num_ts in range(model_count):
@@ -122,7 +130,7 @@ if COMPUTE:
                 # print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
                 #     num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
-                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = True)
+                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
 
                 ## DATA
                 #prepare result matrices
@@ -254,7 +262,7 @@ if COMPUTE:
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
-                fname = ("ERM1884-2013-SIC-long_CMImap4bins3Dcond%d.bin" % (num_ts))
+                fname = ("Nino34-ERM1884-2013-%s_CMImap4bins3Dcond%d.bin" % (CMIP5model, num_ts))
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
@@ -334,7 +342,7 @@ else:
                     pass
                 i += 1
 
-            plt.savefig('plots/ERM1854-2013linear-CMImap4bin%d.png' % (num_ts))
+            plt.savefig('plots/ERM1884-2013quad21PCs-CMImap4bin%d.png' % (num_ts))
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
