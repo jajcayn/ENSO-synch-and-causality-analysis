@@ -50,10 +50,10 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
 
     # enso.select_date(date(1884,1,1), date(2014,1,1))
 
-    if CMIP5model is not None and num_ts is not None:
-        fname = CMIP5model + '.txt'
-        model = np.loadtxt('N34_CMIP5/' + fname)
-        enso.data = model[:, num_ts]
+    # if CMIP5model is not None and num_ts is not None:
+    #     fname = CMIP5model + '.txt'
+    #     model = np.loadtxt('N34_CMIP5/' + fname)
+    #     enso.data = model[:, num_ts]
 
     if PROmodel:
         print("[%s] Integrating PRO model which will be used instead of ENSO SSTs..." % (str(datetime.now())))
