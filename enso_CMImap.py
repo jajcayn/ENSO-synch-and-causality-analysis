@@ -120,8 +120,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['linear-4k', 'quad135-4k', 'linear-8k', 'quad135-8k', 
-                'linear-16k', 'quad135-16k', 'quad135-16k', 'linear-32k']
+CMIP5models = ['quad135-32k', 'linear-32k']
 
 if COMPUTE:
     for BINS in bins_list:
