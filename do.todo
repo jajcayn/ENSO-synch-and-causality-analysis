@@ -1,13 +1,13 @@
 LINEAR REGRESSION MODEL:
  ✔ skus na uz hotovych CMI mapy - asi tam nebude nic @done (15-12-15 15:13)
  ✔ neodstranovat rocny cyklus - no anomalies pred EOF @done (16-01-14 22:18)
- ☐ kvadraticky model
+ ✔ kvadraticky model @done (16-02-22 14:47)
  ✘ nieco na styl PRO zaviest do modelu @cancelled (16-01-19 16:30)
  ☐ multiplicative noise instead of additive
  ✔ ostatne CMI maps pocitat na 100surr @done (16-01-14 22:18)
  ✔ vzdy rob spectrum, z-scores a CMI maps @done (16-01-14 22:18)
  ✔ rovnake initial conditions + iny sum @done (16-01-08 15:19)
- ☐ naintegruj ovela dlhsie casove rady ~ 60000bodov a skus analyzovat tie
+ ✔ naintegruj ovela dlhsie casove rady ~ 60000bodov a skus analyzovat tie @done (16-02-22 14:47)
 
 
 PRO model:

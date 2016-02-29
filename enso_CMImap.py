@@ -16,7 +16,7 @@ use_PRO_model = False
 if COMPUTE:
     import platform
     if platform.system() == "Linux":
-        sys.path.append('/home/nikola/Work/phd/multi-scale')
+        sys.path.append('/home/nikolaj/Work/phd/multi-scale')
     elif platform.system() == "Darwin":
         sys.path.append('/Users/nikola/work-ui/multi-scale')
 
@@ -112,7 +112,7 @@ def phase_diff(ph1, ph2):
 
 WVLT_SPAN = [5,93] # unit is month
 NUM_SURR = 100
-WRKRS = 18
+WRKRS = 20
 # BINS = 4
 bins_list = [4]
 
@@ -120,7 +120,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['linear-no-anom-16k-selectedPCs']
+CMIP5models = ['quad-no-anom-16k-selectedPCs']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -132,7 +132,7 @@ if COMPUTE:
             model_count = 10
             # CMIP5model = None
 
-            for num_ts in range(7,model_count):
+            for num_ts in range(model_count):
 
                 print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
                     num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
