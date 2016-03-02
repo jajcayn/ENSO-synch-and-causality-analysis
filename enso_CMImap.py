@@ -120,7 +120,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['quad-no-anom-16k-selectedPCs']
+CMIP5models = ['linear-16k-no-anom-selected21PCs-sigma1', 'linear-16k-no-anom-selected21PCs-sigma0.1', 'linear-16k-no-anom-selected21PCs-sigma0.01']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -129,7 +129,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 10
+            model_count = 5
             # CMIP5model = None
 
             for num_ts in range(model_count):
