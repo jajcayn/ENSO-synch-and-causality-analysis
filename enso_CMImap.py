@@ -186,8 +186,11 @@ if COMPUTE:
 
                 def _coh_cmi_surrs(sg, a, sc, jobq, resq):
                     mean, var, _ = a
-                    s = jobq.get()
-                    while s is not None:
+                    while True:# is not None:
+                        s = jobq.get()
+                        if s is None:
+                            jobq.task_done()
+                            break
                         sg.construct_fourier_surrogates_spatial()
                         sg.add_seasonality(mean, var, None)
 
@@ -267,8 +270,8 @@ if COMPUTE:
                         surrPhaseAmpCMI[surr_completed, :, :] = phAmpCMI
                         surr_completed += 1
 
-                        # if surr_completed % 20 == 0:
-                        print("..%d/%d surrogate done.." % (surr_completed, NUM_SURR))
+                        if surr_completed % 20 == 0:
+                            print("..%d/%d surrogate done.." % (surr_completed, NUM_SURR))
 
                     for w in wrkrs:
                         w.join()
