@@ -267,8 +267,8 @@ if COMPUTE:
                         surrPhaseAmpCMI[surr_completed, :, :] = phAmpCMI
                         surr_completed += 1
 
-                        if surr_completed % 20 == 0:
-                            print("..%d/%d surrogate done.." % (surr_completed, NUM_SURR))
+                        # if surr_completed % 20 == 0:
+                        print("..%d/%d surrogate done.." % (surr_completed, NUM_SURR))
 
                     for w in wrkrs:
                         w.join()
