@@ -110,8 +110,8 @@ def phase_diff(ph1, ph2):
 
     return ph
 
-WVLT_SPAN = [5,93] # unit is month
-NUM_SURR = 100
+WVLT_SPAN = [90,93] # unit is month 5-93
+NUM_SURR = 10
 WRKRS = 20
 # BINS = 4
 bins_list = [4]
@@ -247,14 +247,17 @@ if COMPUTE:
                     surrPhaseAmpCMI = np.zeros_like(surrCoherence)
                     jobq = Queue()
                     resq = Queue()
-                    for i in range(NUM_SURR):
-                        jobq.put(surrs[:, i])
-                    for i in range(WRKRS):
-                        jobq.put(None)
 
                     wrkrs = [Process(target=_coh_cmi_surrs, args = (enso_sg, seasonality, scales, jobq, resq)) for i in range(WRKRS)]
                     for w in wrkrs:
                         w.start()
+
+                    for i in range(NUM_SURR):
+                        jobq.put(surrs[:, i])
+                    for i in range(WRKRS):
+                        jobq.put(None)
+                    jobq.close()
+                    jobq.join_thread()
 
                     while surr_completed < NUM_SURR:
                         coh, cmi, phAmp, phAmpCMI = resq.get()
