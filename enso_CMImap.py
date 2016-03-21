@@ -110,8 +110,8 @@ def phase_diff(ph1, ph2):
 
     return ph
 
-WVLT_SPAN = [90,93] # unit is month 5-93
-NUM_SURR = 10
+WVLT_SPAN = [5,93] # unit is month 5-93
+NUM_SURR = 100
 WRKRS = 20
 # BINS = 4
 bins_list = [4]
