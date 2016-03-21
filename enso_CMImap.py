@@ -120,7 +120,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['quad-16k-selected21PCs-PNF']
+CMIP5models = ['linear-16k-PNF']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -186,9 +186,12 @@ if COMPUTE:
 
                 def _coh_cmi_surrs(sg, a, sc, jobq, resq):
                     mean, var, _ = a
-                    while jobq.get() is not None:
+                    s = jobq.get()
+                    while s is not None:
                         sg.construct_fourier_surrogates_spatial()
                         sg.add_seasonality(mean, var, None)
+
+                        sg.surr_data = s.copy()
 
                         coh = np.zeros((sc.shape[0], sc.shape[0]))
                         cmi = np.zeros_like(phase_phase_coherence)
@@ -232,6 +235,16 @@ if COMPUTE:
                 ## SURROGATES
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
+
+                    surrs = sio.loadmat("Nino34-ERM-1884-2013linear-16k-surrs.mat")['N34s']
+                    if '4k' in EMRmodel:
+                        surrs = surrs[-4096:, :].copy()
+                    elif '8k' in EMRmodel:  
+                        surrs = surrs[-8192:, :].copy()
+                    elif '16k' in EMRmodel:
+                        surrs = surrs[-16384:, :].copy()
+                    elif '32k' in EMRmodel:
+                        surrs = surrs[-32768:, :].copy()
                     
                     surr_completed = 0
                     surrCoherence = np.zeros(([NUM_SURR] + list(phase_phase_coherence.shape)))
@@ -241,7 +254,7 @@ if COMPUTE:
                     jobq = Queue()
                     resq = Queue()
                     for i in range(NUM_SURR):
-                        jobq.put(1)
+                        jobq.put(surrs[:, i])
                     for i in range(WRKRS):
                         jobq.put(None)
 
