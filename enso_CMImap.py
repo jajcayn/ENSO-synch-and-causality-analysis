@@ -189,7 +189,7 @@ if COMPUTE:
                     while True:# is not None:
                         s = jobq.get()
                         if s is None:
-                            jobq.task_done()
+                            # jobq.task_done()
                             break
                         sg.construct_fourier_surrogates_spatial()
                         sg.add_seasonality(mean, var, None)
