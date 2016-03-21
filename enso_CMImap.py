@@ -237,14 +237,8 @@ if COMPUTE:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
                     surrs = sio.loadmat("Nino34-ERM-1884-2013linear-16k-surrs.mat")['N34s']
-                    if '4k' in EMRmodel:
-                        surrs = surrs[-4096:, :].copy()
-                    elif '8k' in EMRmodel:  
-                        surrs = surrs[-8192:, :].copy()
-                    elif '16k' in EMRmodel:
-                        surrs = surrs[-16384:, :].copy()
-                    elif '32k' in EMRmodel:
-                        surrs = surrs[-32768:, :].copy()
+                    surrs = surrs[-16384:, :].copy()
+
                     
                     surr_completed = 0
                     surrCoherence = np.zeros(([NUM_SURR] + list(phase_phase_coherence.shape)))
