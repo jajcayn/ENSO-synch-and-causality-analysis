@@ -17,7 +17,7 @@ use_PRO_model = False
 if COMPUTE:
     import platform
     if platform.system() == "Linux":
-        sys.path.append('/home/nikolaj/Work/phd/multi-scale')
+        sys.path.append('/home/nikola/Work/phd/multi-scale')
     elif platform.system() == "Darwin":
         sys.path.append('/Users/nikola/work-ui/multi-scale')
 
@@ -120,7 +120,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['linear-16k-PNF-24chunks']
+CMIP5models = ['quad-16k-PNF']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -239,7 +239,7 @@ if COMPUTE:
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    surrs = sio.loadmat("Nino34-ERM-1884-2013linear-16k-surrs.mat")['N34s']
+                    surrs = sio.loadmat("Nino34-ERM-1884-2013quad-16k-surrs.mat")['N34s']
                     surrs = surrs[-16384:, :].copy()
 
                     
