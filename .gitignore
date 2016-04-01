@@ -6,3 +6,4 @@ N34_CMIP5/
 notebooks/
 *.mat
 *.out
+*.csv

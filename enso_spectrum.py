@@ -57,7 +57,7 @@ def load_enso_SSTs(CMIP5model = None, num_ts = None, PROmodel = False):
         a = list(enso.get_seasonality(DETREND = False))
         enso_sg = SurrogateField()
 
-        _, _, idx = enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = False)
+        _, _, idx = enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), copy = False)
         enso_sg.copy_field(enso)
         enso_sg.data = enso_sg.data[idx[0]:idx[1]]
 
@@ -67,7 +67,7 @@ def load_enso_SSTs(CMIP5model = None, num_ts = None, PROmodel = False):
         a[1] = a[1][idx[0]:idx[1]]
 
     # select 1024 data points
-    enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = True)
+    enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), copy = True)
     print("[%s] Data loaded with shape %s" % (str(datetime.now()), enso.data.shape))
 
     return enso, enso_sg, a
@@ -79,25 +79,26 @@ def load_enso_SSTs(CMIP5model = None, num_ts = None, PROmodel = False):
 
 NUM_SURR = 1000
 use_PRO_model = False
-CMIP5models = ['4k', '8k', '16k', '32k']
+CMIP5models = ['4k']
 
 
 for CMIP5model in CMIP5models:
     # fname = CMIP5model + '.txt'
     # model = np.loadtxt('N34_CMIP5/' + fname)
     # model_count = model.shape[1]
-    import scipy.io as sio
-    a = sio.loadmat("Nino34-ERM-1884-2013linear-no-anom-16k-selectedPCs.mat")
-    sim_nino = a['N34s'] # 1920 x 100 as ts length x ensemble
-    model_count = sim_nino.shape[1]
-    if CMIP5model == '4k':
-        sim_nino = sim_nino[-4096:, :]
-    elif CMIP5model == '8k':
-        sim_nino = sim_nino[-8192:, :]
-    elif CMIP5model == '16k':
-        sim_nino = sim_nino[-16384:, :]
-    elif CMIP5model == '32k':
-        sim_nino = sim_nino[-32768:, :]
+    enso, _, _ = load_enso_SSTs(None, None, False)
+    # import scipy.io as sio
+    # a = sio.loadmat("Nino34-ERM-1884-2013quad-no-anom-16k-selectedPCs.mat")
+    # sim_nino = a['N34s'] # 1920 x 100 as ts length x ensemble
+    model_count = 1
+    # if CMIP5model == '4k':
+    #     sim_nino = sim_nino[-4096:, :]
+    # elif CMIP5model == '8k':
+    #     sim_nino = sim_nino[-8192:, :]
+    # elif CMIP5model == '16k':
+    #     sim_nino = sim_nino[-16384:, :]
+    # elif CMIP5model == '32k':
+    #     sim_nino = sim_nino[-32768:, :]
 
     plt1 = []
     plt2 = []
@@ -105,6 +106,8 @@ for CMIP5model in CMIP5models:
     plt4 = []
     plt5 = []
     plt6 = []
+
+    sim_nino = enso.data[:, np.newaxis]
 
     # data_type = "PRO model damped integrated monthly data -- 100members"
     # fname = "SPECTRUM-PROdamped-ensemble100.png"
@@ -186,10 +189,10 @@ for CMIP5model in CMIP5models:
         plt5.append(autocoherence_re2)
         plt6.append(wvlt_power2)
 
-        # with open("spectra/" + fname, "wb") as f:
-        #     cPickle.dump({"scales" : scales, "autocoherence_re" : autocoherence_re, "autocoherence_ph" : autocoherence_ph, 
-        #         "wvlt_power" : wvlt_power, "scales2" : scales2, "autocoherence_re2" : autocoherence_re2, "autocoherence_ph2" : autocoherence_ph2, 
-        #         "wvlt_power2" : wvlt_power2}, f, protocol = cPickle.HIGHEST_PROTOCOL)
+        with open("spectra/nino34.bin", "wb") as f:
+            cPickle.dump({"scales" : scales, "autocoherence_re" : autocoherence_re, "autocoherence_ph" : autocoherence_ph, 
+                "wvlt_power" : wvlt_power, "scales2" : scales2, "autocoherence_re2" : autocoherence_re2, "autocoherence_ph2" : autocoherence_ph2, 
+                "wvlt_power2" : wvlt_power2}, f, protocol = cPickle.HIGHEST_PROTOCOL)
 
 
     plt1 = np.array(plt1)
@@ -270,5 +273,5 @@ for CMIP5model in CMIP5models:
     plt.suptitle("Regression model -- 100 realisations", size = 35)
 
     # plt.savefig("spectra/" + fname)
-    plt.savefig("spectra/Nino34-ERM-linear-no-anom-16k-selectedPCs.png")
+    plt.savefig("spectra/nino34.png")
 
