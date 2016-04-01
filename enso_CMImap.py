@@ -10,7 +10,7 @@ import sys
 import matplotlib.gridspec as gridspec
 import scipy.io as sio
 
-COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = False
 
@@ -111,7 +111,7 @@ def phase_diff(ph1, ph2):
     return ph
 
 WVLT_SPAN = [5,93] # unit is month
-NUM_SURR = 100
+NUM_SURR = 1000
 WRKRS = 20
 # BINS = 4
 bins_list = [4]
@@ -284,18 +284,21 @@ if COMPUTE:
                         f, protocol = cPickle.HIGHEST_PROTOCOL)
         print("[%s] All models done." % str(datetime.now()))
 
+
+
 else:
+    CMIP5models = ['linear-16k']
     BINS = 4
     for CMIP5model in CMIP5models:
         # fname = CMIP5model + '.txt'
         # model = np.loadtxt('N34_CMIP5/' + fname)
         # model_count = model.shape[1]
-        model_count = 100
+        model_count = 5
         # model_count = 1
         # CMIP5model = None
 
         for num_ts in range(model_count):
-            fname = ("bins/ERM1884-2013quad21PCs_CMImap4bins3Dcond%d.bin" % (num_ts))
+            fname = ("bins/Nino34-ERM1884-2013-%s_CMImap4bins3Dcond%d-detail.bin" % (CMIP5model, num_ts))
             # fname = ("PROdamped-CMImap4bins3Dcond_GaussCorr.bin")
             CUT = slice(0,NUM_SURR)
             # version = 3
@@ -339,7 +342,7 @@ else:
             tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI 3D cond.']
             for ax, cont, tit in zip(axs, plot, tits):
                 ax = plt.subplot(ax)
-                cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
+                cs = ax.contourf(x, y, cont, levels = np.arange(0.90, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
                 ax.tick_params(axis='both', which='major', labelsize = 17)
                 ax.set_title(tit, size = 28)
                 ax.xaxis.set_major_locator(MultipleLocator(12))
@@ -349,6 +352,8 @@ else:
                 ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
                 ax.yaxis.set_minor_locator(MultipleLocator(6))
                 ax.set_xlabel("period [years]", size = 20)
+                plt.colorbar(cs)
+                ax.grid()
                 if i % 2 == 0:
                     ax.set_ylabel("period [years]", size = 20)
                 else:
@@ -356,7 +361,7 @@ else:
                     pass
                 i += 1
 
-            plt.savefig('plots/ERM1884-2013quad21PCs-CMImap4bin%d.png' % (num_ts))
+            plt.savefig('plots/ERM1884-2013-%s-CMImap4bin%d-detail.png' % (CMIP5model, num_ts))
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
