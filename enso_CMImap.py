@@ -287,15 +287,20 @@ if COMPUTE:
 
 
 else:
-    CMIP5models = ['linear-no-anom-16k']
+    CMIP5models = ['linear-16k']
     BINS = 4
     for CMIP5model in CMIP5models:
         # fname = CMIP5model + '.txt'
         # model = np.loadtxt('N34_CMIP5/' + fname)
         # model_count = model.shape[1]
-        model_count = 10
+        model_count = 5
         # model_count = 1
         # CMIP5model = None
+        scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
+        overall_ph_ph = np.zeros((scales.shape[0], scales.shape[0]))
+        overall_ph_ph_cmi = np.zeros_like(overall_ph_ph)
+        overall_ph_amp = np.zeros_like(overall_ph_ph)
+        overall_ph_amp_cmi = np.zeros_like(overall_ph_ph)
 
         for num_ts in range(model_count):
             fname = ("bins/Nino34-ERM1884-2013-%s_CMImap4bins3Dcond%d.bin" % (CMIP5model, num_ts))
@@ -328,7 +333,11 @@ else:
                     res_phase_amp[i, j] = np.sum(np.greater(phase_amp_MI[i, j], surrPhaseAmp[:, i, j])) / np.float(surrPhaseAmp.shape[0])
                     res_phase_amp_CMI[i, j] = np.sum(np.greater(phase_amp_condMI[i, j], surrPhaseAmpCMI[:, i, j])) / np.float(surrPhaseAmpCMI.shape[0])
 
-            scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
+            overall_ph_ph += np.greater_equal(res_phase_coh, 0.95)
+            overall_ph_ph_cmi += np.greater_equal(res_phase_cmi, 0.95)
+            overall_ph_amp += np.greater_equal(res_phase_amp, 0.95)
+            overall_ph_amp_cmi += np.greater_equal(res_phase_amp_CMI, 0.95)
+
             # a = np.random.rand(scales.shape[0], scales.shape[0]) + 0.5
             x, y = np.meshgrid(scales, scales)
 
@@ -342,7 +351,7 @@ else:
             tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI 3D cond.']
             for ax, cont, tit in zip(axs, plot, tits):
                 ax = plt.subplot(ax)
-                cs = ax.contourf(x, y, cont, levels = np.arange(0.90, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
+                cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
                 ax.tick_params(axis='both', which='major', labelsize = 17)
                 ax.set_title(tit, size = 28)
                 ax.xaxis.set_major_locator(MultipleLocator(12))
@@ -365,4 +374,36 @@ else:
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
+        fig = plt.figure(figsize=(15,15))
+        gs = gridspec.GridSpec(2, 2)
+        gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
+        i = 0
+        axs = [gs[0,0], gs[0,1], gs[1,0], gs[1,1]]
+        plot = [overall_ph_ph.T, overall_ph_ph_cmi.T, overall_ph_amp.T, overall_ph_amp_cmi.T]
+        tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI 3D cond.']
+        for ax, cont, tit in zip(axs, plot, tits):
+            ax = plt.subplot(ax)
+            cs = ax.contourf(x, y, cont, levels = np.arange(1, model_count+1, 1), cmap = plt.cm.get_cmap("jet"))
+            # cs = ax.pcolormesh(x, y, cont, vmin = 1)
+            ax.tick_params(axis='both', which='major', labelsize = 17)
+            ax.set_title(tit, size = 28)
+            ax.xaxis.set_major_locator(MultipleLocator(12))
+            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
+            ax.xaxis.set_minor_locator(MultipleLocator(6))
+            ax.yaxis.set_major_locator(MultipleLocator(12))
+            ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
+            ax.yaxis.set_minor_locator(MultipleLocator(6))
+            ax.set_xlabel("period [years]", size = 20)
+            plt.colorbar(cs)
+            ax.grid()
+            if i % 2 == 0:
+                ax.set_ylabel("period [years]", size = 20)
+            else:
+                # fig.colorbar(cs, ax = ax, shrink = 0.5)
+                pass
+            i += 1
+
+        plt.savefig('plots/ERM1884-2013-%s-CMImap4bin-overall.png' % (CMIP5model))
+
+        print np.unique(overall_ph_ph)
 
