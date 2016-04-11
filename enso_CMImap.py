@@ -10,7 +10,7 @@ import sys
 import matplotlib.gridspec as gridspec
 import scipy.io as sio
 
-COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = False
 
@@ -288,15 +288,17 @@ if COMPUTE:
 
 
 else:
-    CMIP5models = ['']
+    CMIP5models = ['linear-16k-no-seasonal-no-lowfreqvar']
     BINS = 4
     PUB = True
     for CMIP5model in CMIP5models:
         # fname = CMIP5model + '.txt'
         # model = np.loadtxt('N34_CMIP5/' + fname)
         # model_count = model.shape[1]
-        model_count = 1
-        # model_count = 1
+        if PUB:
+            model_count = 1
+        else:
+            model_count = 5
         # CMIP5model = None
         scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
         overall_ph_ph = np.zeros((scales.shape[0], scales.shape[0]))
@@ -306,7 +308,7 @@ else:
 
         for num_ts in range(model_count):
             # fname = ("bins/Nino34-ERM1884-2013-%s_CMImap4bins3Dcond%d.bin" % (CMIP5model, num_ts))
-            fname = ("bins/KNN_CMImap_k_32_3Dcond_GaussCorr.bin")
+            fname = ("bins/kNN_CMImap_k_32_3Dcond_GaussCorr.bin")
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
@@ -349,9 +351,9 @@ else:
                 gs = gridspec.GridSpec(1, 2)
                 gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
                 axs = [gs[0,0], gs[0,1]]
-                plot = [res_phase_coh.T, res_phase_amp_CMI.T]
-                tits = ['PHASE COHERENCE', 'PHASE x AMP CMI']
-                labs = ['PHASE', 'AMP']
+                plot = [res_phase_cmi.T, res_phase_amp_CMI.T]
+                tits = ['CMI PHASE DIFF', 'PHASE x AMP CMI']
+                labs = ['$\Delta$ PHASE', 'AMP']
                 for ax, cont, tit, lab in zip(axs, plot, tits, labs):
                     ax = plt.subplot(ax)
                     cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')

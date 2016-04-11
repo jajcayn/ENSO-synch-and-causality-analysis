@@ -8,8 +8,8 @@ from matplotlib.ticker import MultipleLocator, FuncFormatter
 import cPickle
 import sys
 import matplotlib.gridspec as gridspec
-# sys.path.append('/Users/nikola/work-ui/multi-scale')
-sys.path.append("/home/nikola/Work/multi-scale")
+sys.path.append('/Users/nikola/work-ui/multi-scale')
+# sys.path.append("/home/nikola/Work/multi-scale")
 import src.wavelet_analysis as wvlt
 import src.mutual_information as MI
 from src.data_class import DataField
@@ -273,5 +273,5 @@ for CMIP5model in CMIP5models:
     plt.suptitle("Regression model -- 100 realisations", size = 35)
 
     # plt.savefig("spectra/" + fname)
-    plt.savefig("spectra/nino34.png")
+    plt.savefig("spectra/nino34.eps")
 

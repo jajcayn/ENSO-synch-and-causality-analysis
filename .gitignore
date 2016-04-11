@@ -4,6 +4,8 @@
 *.txt
 N34_CMIP5/
 notebooks/
+plots/
+spectra/
 *.mat
 *.out
 *.csv
