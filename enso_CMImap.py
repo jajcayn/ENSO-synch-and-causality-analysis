@@ -10,7 +10,7 @@ import sys
 import matplotlib.gridspec as gridspec
 import scipy.io as sio
 
-COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = False
 
@@ -76,13 +76,22 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
         raw = sio.loadmat("Nino34-ERM-1884-2013%s.mat" % (EMRmodel))['N34s']
         # raw = raw[:, :] # same length as nino3.4 data
         if '4k' in EMRmodel:
-            enso.data = raw[-4096:, num_ts].copy()
+            enso.data = raw[-4096:, num_ts//3].copy()
         elif '8k' in EMRmodel:  
-            enso.data = raw[-8192:, num_ts].copy()
+            enso.data = raw[-8192:, num_ts//3].copy()
         elif '16k' in EMRmodel:
-            enso.data = raw[-16384:, num_ts].copy()
+            enso.data = raw[-16384:, num_ts//3].copy()
         elif '32k' in EMRmodel:
-            enso.data = raw[-32768:, num_ts].copy()
+            enso.data = raw[-32768:, num_ts//3].copy()
+
+        if num_ts%3 == 0:
+            dat = enso.get_date_from_ndx(12423)
+        elif num_ts%3 == 1:
+            dat = enso.get_date_from_ndx(2434)
+        elif num_ts%3 == 2:
+            dat = enso.get_date_from_ndx(7354)
+        
+        enso.get_data_of_precise_length(length = 1024, start_date = dat, copy = True)
 
 
     if NUM_SURR > 0:
@@ -120,7 +129,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['linear-16k-no-seasonal-no-lowfreqvar-no-clim']
+CMIP5models = ['linear-16k']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -129,7 +138,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 5
+            model_count = 15
             # CMIP5model = None
 
             for num_ts in range(model_count):
@@ -288,9 +297,9 @@ if COMPUTE:
 
 
 else:
-    CMIP5models = ['linear-16k-no-seasonal-no-lowfreqvar']
+    CMIP5models = ['linear-16k']
     BINS = 4
-    PUB = True
+    PUB = False
     for CMIP5model in CMIP5models:
         # fname = CMIP5model + '.txt'
         # model = np.loadtxt('N34_CMIP5/' + fname)
@@ -307,8 +316,8 @@ else:
         overall_ph_amp_cmi = np.zeros_like(overall_ph_ph)
 
         for num_ts in range(model_count):
-            # fname = ("bins/Nino34-ERM1884-2013-%s_CMImap4bins3Dcond%d.bin" % (CMIP5model, num_ts))
-            fname = ("bins/kNN_CMImap_k_32_3Dcond_GaussCorr.bin")
+            fname = ("bins/Nino34-ERM1884-2013-%s_CMImap4bins3Dcond%d.bin" % (CMIP5model, num_ts))
+            # fname = ("bins/kNN_CMImap_k_32_3DcondN34_MIROC5ts0.bin")
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
@@ -352,8 +361,11 @@ else:
                 gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
                 axs = [gs[0,0], gs[0,1]]
                 plot = [res_phase_cmi.T, res_phase_amp_CMI.T]
-                tits = ['CMI PHASE DIFF', 'PHASE x AMP CMI']
-                labs = ['$\Delta$ PHASE', 'AMP']
+                #plot = [res_phase_coh.T, res_phase_amp_CMI.T]
+                tits = ['PHASE-PHASE CAUSALITY', 'PHASE-AMP CAUSALITY']
+                #tits = ['PHASE SYNCHRONIZATION', '']
+                labs = ['PHASE', 'AMP']
+                #labs = ['PHASE', '']
                 for ax, cont, tit, lab in zip(axs, plot, tits, labs):
                     ax = plt.subplot(ax)
                     cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
@@ -365,10 +377,10 @@ else:
                     ax.yaxis.set_major_locator(MultipleLocator(12))
                     ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
                     ax.yaxis.set_minor_locator(MultipleLocator(6))
-                    ax.set_xlabel("PHASE [years]", size = 23)
+                    ax.set_xlabel("PERIOD PHASE [years]", size = 23)
                     # plt.colorbar(cs)
                     ax.grid()
-                    ax.set_ylabel("%s [years]" % lab, size = 23)
+                    ax.set_ylabel("PERIOD %s [years]" % lab, size = 23)
                 plt.savefig('plots/pub.eps', bbox_inches = "tight")
             else:
                 fig = plt.figure(figsize=(15,15))
@@ -410,30 +422,31 @@ else:
             i = 0
             axs = [gs[0,0], gs[0,1], gs[1,0], gs[1,1]]
             plot = [overall_ph_ph.T, overall_ph_ph_cmi.T, overall_ph_amp.T, overall_ph_amp_cmi.T]
-            tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI 3D cond.']
-            for ax, cont, tit in zip(axs, plot, tits):
+            tits = ['PHASE SYNCHRONIZATION', 'PHASE-PHASE CAUSALITY', 'PHASE x AMP MI', 'PHASE-AMP CAUSALITY']
+            labs = ['PHASE', 'PHASE', '', 'AMP']
+            for ax, cont, tit, lab in zip(axs, plot, tits, labs):
                 ax = plt.subplot(ax)
                 cs = ax.contourf(x, y, cont, levels = np.arange(1, model_count+1, 1), cmap = plt.cm.get_cmap("jet"))
                 # cs = ax.pcolormesh(x, y, cont, vmin = 1)
-                ax.tick_params(axis='both', which='major', labelsize = 17)
-                ax.set_title(tit, size = 28)
+                ax.tick_params(axis='both', which='major', labelsize = 20)
+                ax.set_title(tit, size = 30)
                 ax.xaxis.set_major_locator(MultipleLocator(12))
                 ax.xaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
                 ax.xaxis.set_minor_locator(MultipleLocator(6))
                 ax.yaxis.set_major_locator(MultipleLocator(12))
                 ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
                 ax.yaxis.set_minor_locator(MultipleLocator(6))
-                ax.set_xlabel("period [years]", size = 20)
-                plt.colorbar(cs)
+                ax.set_xlabel("PERIOD PHASE [years]", size = 23)
+                # plt.colorbar(cs)
                 ax.grid()
-                if i % 2 == 0:
-                    ax.set_ylabel("period [years]", size = 20)
+                if i % 1 == 0:
+                    ax.set_ylabel("PERIOD %s [years]" % lab, size = 23)
                 else:
                     # fig.colorbar(cs, ax = ax, shrink = 0.5)
                     pass
                 i += 1
 
-            plt.savefig('plots/ERM1884-2013-%s-CMImap4bin-overall.png' % (CMIP5model))
+            plt.savefig('plots/ERM1884-2013-%s-CMImap4bin-overall.eps' % (CMIP5model), bbox_inches = "tight")
 
             print np.unique(overall_ph_ph)
 
