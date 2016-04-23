@@ -35,15 +35,15 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     enso = DataField()
 
     # enso.data = enso_raw[:, 1]
-    # enso.data = np.zeros((65520,))
-    if '4k' in EMRmodel:
-        enso.data = np.zeros((4096,))
-    elif '8k' in EMRmodel:  
-        enso.data = np.zeros((8192,))
-    elif '16k' in EMRmodel:
-        enso.data = np.zeros((16384,))
-    elif '32k' in EMRmodel:
-        enso.data = np.zeros((32768,))
+    enso.data = np.zeros((1200,))
+    # if '4k' in EMRmodel:
+    #     enso.data = np.zeros((4096,))
+    # elif '8k' in EMRmodel:  
+    #     enso.data = np.zeros((8192,))
+    # elif '16k' in EMRmodel:
+    #     enso.data = np.zeros((16384,))
+    # elif '32k' in EMRmodel:
+    #     enso.data = np.zeros((32768,))
 
     time = np.zeros_like(enso.data, dtype = np.int32)
     y = np.int(enso_raw[0, 0])
@@ -73,25 +73,25 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
 
     if EMRmodel is not None:
         print("[%s] Loading EMR simulated syntethic ENSO time series..." % (str(datetime.now())))
-        raw = sio.loadmat("Nino34-ERM-1884-2013%s.mat" % (EMRmodel))['N34s']
-        # raw = raw[:, :] # same length as nino3.4 data
-        if '4k' in EMRmodel:
-            enso.data = raw[-4096:, num_ts//3].copy()
-        elif '8k' in EMRmodel:  
-            enso.data = raw[-8192:, num_ts//3].copy()
-        elif '16k' in EMRmodel:
-            enso.data = raw[-16384:, num_ts//3].copy()
-        elif '32k' in EMRmodel:
-            enso.data = raw[-32768:, num_ts//3].copy()
+        raw = sio.loadmat("DimaKon-Nino34-ERM-%s.mat" % (EMRmodel))['sstn']
+        enso.data = raw[:, num_ts] # same length as nino3.4 data
+        # if '4k' in EMRmodel:
+        #     enso.data = raw[-4096:, num_ts].copy()
+        # elif '8k' in EMRmodel:  
+        #     enso.data = raw[-8192:, num_ts].copy()
+        # elif '16k' in EMRmodel:
+        #     enso.data = raw[-16384:, num_ts].copy()
+        # elif '32k' in EMRmodel:
+        #     enso.data = raw[-32768:, num_ts].copy()
 
-        if num_ts%3 == 0:
-            dat = enso.get_date_from_ndx(12423)
-        elif num_ts%3 == 1:
-            dat = enso.get_date_from_ndx(2434)
-        elif num_ts%3 == 2:
-            dat = enso.get_date_from_ndx(7354)
+        # if num_ts%3 == 0:
+        #     dat = enso.get_date_from_ndx(12423)
+        # elif num_ts%3 == 1:
+        #     dat = enso.get_date_from_ndx(2434)
+        # elif num_ts%3 == 2:
+        #     dat = enso.get_date_from_ndx(7354)
         
-        enso.get_data_of_precise_length(length = 1024, start_date = dat, copy = True)
+        enso.get_data_of_precise_length(length = 1024, end_date = enso.get_date_from_ndx(-1), copy = True)
 
 
     if NUM_SURR > 0:
@@ -129,7 +129,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['linear-16k']
+CMIP5models = ['linear-SSTA']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -138,7 +138,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 15
+            model_count = 20
             # CMIP5model = None
 
             for num_ts in range(model_count):
@@ -286,7 +286,7 @@ if COMPUTE:
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
-                fname = ("Nino34-ERM1884-2013-%s_CMImap4bins3Dcond%d.bin" % (CMIP5model, num_ts))
+                fname = ("Dima-Nino34-ERM-%s_CMImap4bins3Dcond%d.bin" % (CMIP5model, num_ts))
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
