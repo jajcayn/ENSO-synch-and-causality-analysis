@@ -129,7 +129,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['linear-SSTA']
+CMIP5models = ['linear-SSTA-15PC-L7', 'linear-SST-15PC-L7']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -297,7 +297,7 @@ if COMPUTE:
 
 
 else:
-    CMIP5models = ['linear-16k']
+    CMIP5models = ['linear-16k-no-seasonal-no-lowfreqvar']
     BINS = 4
     PUB = False
     for CMIP5model in CMIP5models:
@@ -307,7 +307,7 @@ else:
         if PUB:
             model_count = 1
         else:
-            model_count = 5
+            model_count = 20
         # CMIP5model = None
         scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
         overall_ph_ph = np.zeros((scales.shape[0], scales.shape[0]))
@@ -316,7 +316,7 @@ else:
         overall_ph_amp_cmi = np.zeros_like(overall_ph_ph)
 
         for num_ts in range(model_count):
-            fname = ("bins/Nino34-ERM1884-2013-%s_CMImap4bins3Dcond%d.bin" % (CMIP5model, num_ts))
+            fname = ("bins/Nino34-ERM1884-2013-%s_CMImap4bins3Dcond%d-v2.bin" % (CMIP5model, num_ts))
             # fname = ("bins/kNN_CMImap_k_32_3DcondN34_MIROC5ts0.bin")
             CUT = slice(0,NUM_SURR)
             # version = 3
@@ -389,7 +389,7 @@ else:
                 i = 0
                 axs = [gs[0,0], gs[0,1], gs[1,0], gs[1,1]]
                 plot = [res_phase_coh.T, res_phase_cmi.T, res_phase_amp.T, res_phase_amp_CMI.T]
-                tits = ['PHASE COHERENCE', 'CMI PHASE DIFF', 'PHASE x AMP MI', 'PHASE x AMP CMI 3D cond.']
+                tits = ['PHASE SYNCHRONIZATION', 'PHASE-PHASE CAUSALITY', 'PHASE x AMP MI', 'PHASE-AMP CAUSALITY']
                 for ax, cont, tit in zip(axs, plot, tits):
                     ax = plt.subplot(ax)
                     cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
@@ -411,7 +411,7 @@ else:
                         pass
                     i += 1
 
-                plt.savefig('plots/ERM1884-2013-%s-CMImap4bin%d.png' % (CMIP5model, num_ts))
+                plt.savefig('plots/ERM1884-2013-stab-%s-CMImap4bin%d-v2.png' % (CMIP5model, num_ts))
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
@@ -423,7 +423,7 @@ else:
             axs = [gs[0,0], gs[0,1], gs[1,0], gs[1,1]]
             plot = [overall_ph_ph.T, overall_ph_ph_cmi.T, overall_ph_amp.T, overall_ph_amp_cmi.T]
             tits = ['PHASE SYNCHRONIZATION', 'PHASE-PHASE CAUSALITY', 'PHASE x AMP MI', 'PHASE-AMP CAUSALITY']
-            labs = ['PHASE', 'PHASE', '', 'AMP']
+            labs = ['PHASE', 'PHASE', 'AMP', 'AMP']
             for ax, cont, tit, lab in zip(axs, plot, tits, labs):
                 ax = plt.subplot(ax)
                 cs = ax.contourf(x, y, cont, levels = np.arange(1, model_count+1, 1), cmap = plt.cm.get_cmap("jet"))
@@ -437,7 +437,7 @@ else:
                 ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
                 ax.yaxis.set_minor_locator(MultipleLocator(6))
                 ax.set_xlabel("PERIOD PHASE [years]", size = 23)
-                # plt.colorbar(cs)
+                plt.colorbar(cs)
                 ax.grid()
                 if i % 1 == 0:
                     ax.set_ylabel("PERIOD %s [years]" % lab, size = 23)
@@ -446,7 +446,7 @@ else:
                     pass
                 i += 1
 
-            plt.savefig('plots/ERM1884-2013-%s-CMImap4bin-overall.eps' % (CMIP5model), bbox_inches = "tight")
+            plt.savefig('plots/Kond-Nino34-%s-CMImap4bin-overall.png' % (CMIP5model), bbox_inches = "tight")
 
             print np.unique(overall_ph_ph)
 
