@@ -87,10 +87,10 @@ for CMIP5model in CMIP5models:
     # model = np.loadtxt('N34_CMIP5/' + fname)
     # model_count = model.shape[1]
     enso, _, _ = load_enso_SSTs(None, None, False)
-    # import scipy.io as sio
-    # a = sio.loadmat("Nino34-ERM-1884-2013quad-no-anom-16k-selectedPCs.mat")
-    # sim_nino = a['N34s'] # 1920 x 100 as ts length x ensemble
-    model_count = 1
+    import scipy.io as sio
+    a = sio.loadmat("Sergey-Nino34-ERM-linear-SST.mat")
+    sim_nino = a['N34s'] # 1920 x 100 as ts length x ensemble
+    model_count = 100
     # if CMIP5model == '4k':
     #     sim_nino = sim_nino[-4096:, :]
     # elif CMIP5model == '8k':
@@ -106,8 +106,8 @@ for CMIP5model in CMIP5models:
     plt4 = []
     plt5 = []
     plt6 = []
-
-    sim_nino = enso.data[:, np.newaxis]
+    sim_nino = sim_nino[-1024:, :]
+    # sim_nino = enso.data[:, np.newaxis]
 
     # data_type = "PRO model damped integrated monthly data -- 100members"
     # fname = "SPECTRUM-PROdamped-ensemble100.png"
@@ -189,7 +189,7 @@ for CMIP5model in CMIP5models:
         plt5.append(autocoherence_re2)
         plt6.append(wvlt_power2)
 
-        with open("spectra/nino34.bin", "wb") as f:
+        with open("spectra/SergeySST.bin", "wb") as f:
             cPickle.dump({"scales" : scales, "autocoherence_re" : autocoherence_re, "autocoherence_ph" : autocoherence_ph, 
                 "wvlt_power" : wvlt_power, "scales2" : scales2, "autocoherence_re2" : autocoherence_re2, "autocoherence_ph2" : autocoherence_ph2, 
                 "wvlt_power2" : wvlt_power2}, f, protocol = cPickle.HIGHEST_PROTOCOL)
@@ -273,5 +273,5 @@ for CMIP5model in CMIP5models:
     plt.suptitle("Regression model -- 100 realisations", size = 35)
 
     # plt.savefig("spectra/" + fname)
-    plt.savefig("spectra/nino34.eps")
+    plt.savefig("spectra/SergeySSTlinear.png")
 

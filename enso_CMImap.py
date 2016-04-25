@@ -73,7 +73,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
 
     if EMRmodel is not None:
         print("[%s] Loading EMR simulated syntethic ENSO time series..." % (str(datetime.now())))
-        raw = sio.loadmat("DimaKon-Nino34-ERM-%s.mat" % (EMRmodel))['sstn']
+        raw = sio.loadmat("Sergey-Nino34-ERM-%s.mat" % (EMRmodel))['N34s']
         enso.data = raw[:, num_ts] # same length as nino3.4 data
         # if '4k' in EMRmodel:
         #     enso.data = raw[-4096:, num_ts].copy()
@@ -129,7 +129,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['linear-SSTA-15PC-L7', 'linear-SST-15PC-L7']
+CMIP5models = ['linear-SST-20PC-L3']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -297,7 +297,7 @@ if COMPUTE:
 
 
 else:
-    CMIP5models = ['linear-16k-no-seasonal-no-lowfreqvar']
+    CMIP5models = ['linear-SST-15PC-L7']
     BINS = 4
     PUB = False
     for CMIP5model in CMIP5models:
@@ -307,7 +307,7 @@ else:
         if PUB:
             model_count = 1
         else:
-            model_count = 20
+            model_count = 7
         # CMIP5model = None
         scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
         overall_ph_ph = np.zeros((scales.shape[0], scales.shape[0]))
@@ -316,7 +316,7 @@ else:
         overall_ph_amp_cmi = np.zeros_like(overall_ph_ph)
 
         for num_ts in range(model_count):
-            fname = ("bins/Nino34-ERM1884-2013-%s_CMImap4bins3Dcond%d-v2.bin" % (CMIP5model, num_ts))
+            fname = ("bins/Dima-Nino34-ERM-%s_CMImap4bins3Dcond%d.bin" % (CMIP5model, num_ts))
             # fname = ("bins/kNN_CMImap_k_32_3DcondN34_MIROC5ts0.bin")
             CUT = slice(0,NUM_SURR)
             # version = 3
@@ -411,7 +411,7 @@ else:
                         pass
                     i += 1
 
-                plt.savefig('plots/ERM1884-2013-stab-%s-CMImap4bin%d-v2.png' % (CMIP5model, num_ts))
+                plt.savefig('plots/Kond-Nino34-%s-CMImap4bin%d-v2.png' % (CMIP5model, num_ts))
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
