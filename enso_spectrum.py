@@ -88,8 +88,8 @@ for CMIP5model in CMIP5models:
     # model_count = model.shape[1]
     enso, _, _ = load_enso_SSTs(None, None, False)
     import scipy.io as sio
-    a = sio.loadmat("Sergey-Nino34-ERM-linear-SST-20PC-L3.mat")
-    sim_nino = a['N34s'] # 1920 x 100 as ts length x ensemble
+    a = sio.loadmat("DimaKon-Nino34-ERM-linear-SST-15PC-L7.mat")
+    sim_nino = a['sstf'] # 1920 x 100 as ts length x ensemble
     model_count = 100
     # if CMIP5model == '4k':
     #     sim_nino = sim_nino[-4096:, :]
@@ -197,7 +197,7 @@ for CMIP5model in CMIP5models:
     plt5 = np.array(plt5)
     plt6 = np.array(plt6)
 
-    with open("spectra/SergeySST.bin", "wb") as f:
+    with open("spectra/DimaSST.bin", "wb") as f:
         cPickle.dump({"scales" : scales, "autocoherence_re" : plt2, "autocoherence_ph" : plt1, 
             "wvlt_power" : plt3, "scales2" : scales2, "autocoherence_re2" : plt5, "autocoherence_ph2" : plt4, 
             "wvlt_power2" : plt6}, f, protocol = cPickle.HIGHEST_PROTOCOL)
@@ -273,5 +273,5 @@ for CMIP5model in CMIP5models:
     plt.suptitle("Regression model -- 100 realisations", size = 35)
 
     # plt.savefig("spectra/" + fname)
-    plt.savefig("spectra/SergeySSTlinear.png")
+    plt.savefig("spectra/DimaSSTlinear.png")
 
