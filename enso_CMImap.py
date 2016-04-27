@@ -34,8 +34,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
     enso = DataField()
 
-    # enso.data = enso_raw[:, 1]
-    enso.data = np.zeros((1200,))
+    enso.data = enso_raw[:, 1]
+    # enso.data = np.zeros((1200,))
     # if '4k' in EMRmodel:
     #     enso.data = np.zeros((4096,))
     # elif '8k' in EMRmodel:  
@@ -91,7 +91,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
         # elif num_ts%3 == 2:
         #     dat = enso.get_date_from_ndx(7354)
         
-        enso.get_data_of_precise_length(length = 1024, end_date = enso.get_date_from_ndx(-1), copy = True)
+    enso.get_data_of_precise_length(length = 1024, end_date = enso.get_date_from_ndx(-1), copy = True)
 
 
     if NUM_SURR > 0:
@@ -138,7 +138,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 20
+            model_count = 1
             # CMIP5model = None
 
             for num_ts in range(model_count):
@@ -146,7 +146,8 @@ if COMPUTE:
                 print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
                     num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
-                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
+                # enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
+                enso, enso_sg, seasonality = load_enso_SSTs(None, False, None)
 
                 ## DATA
                 #prepare result matrices
@@ -195,12 +196,12 @@ if COMPUTE:
 
                 def _coh_cmi_surrs(sg, a, sc, jobq, resq):
                     mean, var, _ = a
-                    # s = jobq.get()
-                    while jobq.get() is not None:
-                        sg.construct_fourier_surrogates_spatial()
-                        sg.add_seasonality(mean, var, None)
+                    s = jobq.get()
+                    while s is not None:
+                        # sg.construct_fourier_surrogates_spatial()
+                        # sg.add_seasonality(mean, var, None)
 
-                        # sg.surr_data = s.copy()
+                        sg.surr_data = s.copy()
 
                         coh = np.zeros((sc.shape[0], sc.shape[0]))
                         cmi = np.zeros_like(phase_phase_coherence)
@@ -245,8 +246,8 @@ if COMPUTE:
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    # surrs = sio.loadmat("Nino34-ERM-1884-2013linear-16k-surrs.mat")['N34s']
-                    # surrs = surrs[-16384:, :].copy()
+                    surrs = sio.loadmat("DimaKon-Nino34-ERM-linear-SSTA.mat")['sstn']
+                    surrs = surrs[-1024:, :].copy()
 
                     
                     surr_completed = 0
@@ -257,8 +258,8 @@ if COMPUTE:
                     jobq = Queue()
                     resq = Queue()
                     for i in range(NUM_SURR):
-                        # jobq.put(surrs[:, i])
-                        jobq.put(1)
+                        jobq.put(surrs[:, i])
+                        # jobq.put(1)
                     for i in range(WRKRS):
                         jobq.put(None)
 
@@ -286,7 +287,7 @@ if COMPUTE:
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
-                fname = ("Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d.bin" % (CMIP5model, num_ts))
+                fname = ("Nino34-obs-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
@@ -297,7 +298,7 @@ if COMPUTE:
 
 
 else:
-    CMIP5models = ['linear-SST-20PC-L3']
+    CMIP5models = ['linear-SST-20PC-L3-multiplicative-seasonal-std']
     BINS = 4
     PUB = False
     for CMIP5model in CMIP5models:
