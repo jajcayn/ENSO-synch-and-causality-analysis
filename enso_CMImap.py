@@ -34,8 +34,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
     enso = DataField()
 
-    enso.data = enso_raw[:, 1]
-    # enso.data = np.zeros((1200,))
+    # enso.data = enso_raw[:, 1]
+    enso.data = np.zeros((1200,))
     # if '4k' in EMRmodel:
     #     enso.data = np.zeros((4096,))
     # elif '8k' in EMRmodel:  
