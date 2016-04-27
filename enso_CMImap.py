@@ -23,7 +23,7 @@ if COMPUTE:
 
     import src.wavelet_analysis as wvlt
     import src.mutual_information as MI
-    from src.data_class import DataField
+    from src.data_class import DataField, load_enso_index
     from src.surrogates import SurrogateField
     from multiprocessing import Process, Queue
 
@@ -31,11 +31,12 @@ if COMPUTE:
 def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     # load enso SSTs
     print("[%s] Loading monthly ENSO SSTs..." % str(datetime.now()))
-    enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
-    enso = DataField()
+    # enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
+    # enso = DataField()
 
+    enso = load_enso_index("nino%sraw.txt" % num_ts, num_ts, date(1870, 1, 1), date(2016, 1, 1))
     # enso.data = enso_raw[:, 1]
-    enso.data = np.zeros((1200,))
+    # enso.data = np.zeros((1200,))
     # if '4k' in EMRmodel:
     #     enso.data = np.zeros((4096,))
     # elif '8k' in EMRmodel:  
@@ -44,18 +45,6 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     #     enso.data = np.zeros((16384,))
     # elif '32k' in EMRmodel:
     #     enso.data = np.zeros((32768,))
-
-    time = np.zeros_like(enso.data, dtype = np.int32)
-    y = np.int(enso_raw[0, 0])
-    start_date = date(y, 1, 1)
-    delta = relativedelta(months = +1)
-    d = start_date
-    for i in range(time.shape[0]):
-        time[i] = d.toordinal()
-        d += delta
-
-    enso.time = time
-    enso.location = 'NINO3.4 SSTs'
 
     # enso.select_date(date(1884,1,1), date(2014,1,1))
 
@@ -120,7 +109,7 @@ def phase_diff(ph1, ph2):
     return ph
 
 WVLT_SPAN = [5,93] # unit is month
-NUM_SURR = 100
+NUM_SURR = 500
 WRKRS = 20
 # BINS = 4
 bins_list = [4]
@@ -138,16 +127,17 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 20
+            model_count = ['34', '12', '3', '4']
             # CMIP5model = None
 
-            for num_ts in range(model_count):
+            # for num_ts in range(model_count):
+            for num_ts in model_count:
 
-                print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
-                    num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
+                # print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
+                    # num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
-                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
-                # enso, enso_sg, seasonality = load_enso_SSTs(None, False, None)
+                # enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
+                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, False, None)
 
                 ## DATA
                 #prepare result matrices
@@ -290,7 +280,8 @@ if COMPUTE:
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
-                fname = ("Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+                # fname = ("Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+                fname = ("Nino%s-obs_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
