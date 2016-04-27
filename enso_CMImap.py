@@ -197,8 +197,8 @@ if COMPUTE:
                 def _coh_cmi_surrs(sg, a, sc, jobq, resq):
                     mean, var, _ = a
                     # while s is not None:
-                    s = jobq.get()
                     while True:
+                        s = jobq.get()
                         if s is None:
                             break
                         sg.construct_fourier_surrogates_spatial()
