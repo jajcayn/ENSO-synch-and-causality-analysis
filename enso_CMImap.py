@@ -197,10 +197,10 @@ if COMPUTE:
                 def _coh_cmi_surrs(sg, a, sc, jobq, resq):
                     mean, var, _ = a
                     # while s is not None:
+                    s = jobq.get()
                     while True:
                         if s is None:
                             break
-                        s = jobq.get()
                         sg.construct_fourier_surrogates_spatial()
                         # sg.add_seasonality(mean, var, None)
 
