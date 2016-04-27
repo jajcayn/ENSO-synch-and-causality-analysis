@@ -129,7 +129,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['linear-SST-20PC-L3-multiplicative-seasonal-std']
+CMIP5models = ['linear-SST-20PC-L3-multiplicative-5mon-snippets']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -138,7 +138,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 1
+            model_count = 20
             # CMIP5model = None
 
             for num_ts in range(model_count):
@@ -146,8 +146,8 @@ if COMPUTE:
                 print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
                     num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
-                # enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
-                enso, enso_sg, seasonality = load_enso_SSTs(None, False, None)
+                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
+                # enso, enso_sg, seasonality = load_enso_SSTs(None, False, None)
 
                 ## DATA
                 #prepare result matrices
@@ -290,7 +290,7 @@ if COMPUTE:
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
-                fname = ("Nino34-obs-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+                fname = ("Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
@@ -321,7 +321,7 @@ else:
 
         for num_ts in range(model_count):
             fname = ("bins/Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d.bin" % (CMIP5model, num_ts))
-            # fname = ("bins/kNN_CMImap_k_32_3DcondN34_MIROC5ts0.bin")
+            # fname = ("bins/Nino34-obs-linear-SST-20PC-L3-multiplicative-seasonal-std_CMImap4bins3Dcond0-against-basicERM.bin")
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
@@ -416,6 +416,7 @@ else:
                     i += 1
 
                 plt.savefig('plots/Sergey-Nino34-%s-CMImap4bin%d.png' % (CMIP5model, num_ts))
+                # plt.savefig('plots/Nino34-obs-linear-SST-20PC-L3-multiplicative-seasonal-std-against-basicERM.png')
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
