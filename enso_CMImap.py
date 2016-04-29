@@ -288,7 +288,7 @@ if COMPUTE:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
                 # fname = ("Nino%s-obs-vs-ExA-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
-                fname = ("ExA-vs-ExA-comb-mode_CMImap4bins3Dcond-500FT.bin" % (num_ts))
+                fname = ("ExA-vs-ExA-comb-mode_CMImap4bins3Dcond-500FT.bin")
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
