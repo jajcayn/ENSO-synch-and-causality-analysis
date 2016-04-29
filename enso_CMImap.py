@@ -35,6 +35,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     # enso = DataField()
 
     enso = load_enso_index("nino%sraw.txt" % num_ts, num_ts, date(1900, 1, 1), date(2011, 1, 1))
+    exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")
+    enso.data = exa
     # enso.data = enso_raw[:, 1]
     # enso.data = np.zeros((1200,))
     # if '4k' in EMRmodel:
@@ -155,7 +157,8 @@ if COMPUTE:
 
                 for i in range(phase_phase_coherence.shape[0]):
                     sc_i = scales[i] / fourier_factor
-                    wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                    # wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                    wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                     phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                     
                     for j in range(phase_phase_coherence.shape[1]):
@@ -194,9 +197,9 @@ if COMPUTE:
                         if s is None:
                             break
                         sg.construct_fourier_surrogates_spatial()
-                        # sg.add_seasonality(mean, var, None)
+                        sg.add_seasonality(mean, var, None)
 
-                        sg.surr_data = s.copy()
+                        # sg.surr_data = s.copy()
 
                         coh = np.zeros((sc.shape[0], sc.shape[0]))
                         cmi = np.zeros_like(phase_phase_coherence)
@@ -212,8 +215,8 @@ if COMPUTE:
                             
                             for j in range(coh.shape[1]):
                                 sc_j = sc[j] / fourier_factor
-                                # wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
-                                wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                                wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                                # wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                                 phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                                 amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
@@ -284,7 +287,8 @@ if COMPUTE:
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
-                fname = ("Nino%s-obs-vs-ExA-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
+                # fname = ("Nino%s-obs-vs-ExA-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
+                fname = ("ExA-vs-ExA-comb-mode_CMImap4bins3Dcond-500FT.bin" % (num_ts))
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
@@ -295,7 +299,7 @@ if COMPUTE:
 
 
 else:
-    CMIP5models = ['linear-SST-20PC-L3-multiplicative-seasonal-std']
+    CMIP5models = ['linear-SST-20PC-L3-multiplicative-5mon-snippets']
     BINS = 4
     PUB = False
     for CMIP5model in CMIP5models:
@@ -305,7 +309,7 @@ else:
         if PUB:
             model_count = 1
         else:
-            model_count = 20
+            model_count = 1
         # CMIP5model = None
         scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
         overall_ph_ph = np.zeros((scales.shape[0], scales.shape[0]))
@@ -313,9 +317,11 @@ else:
         overall_ph_amp = np.zeros_like(overall_ph_ph)
         overall_ph_amp_cmi = np.zeros_like(overall_ph_ph)
 
-        for num_ts in range(model_count):
-            fname = ("bins/Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d.bin" % (CMIP5model, num_ts))
-            # fname = ("bins/Nino34-obs-linear-SST-20PC-L3-multiplicative-seasonal-std_CMImap4bins3Dcond0-against-basicERM.bin")
+        model_count = ['34']
+
+        for num_ts in model_count:
+            # fname = ("bins/Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+            fname = ("bins/Nino%s-obs-vs-ExA-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
@@ -399,18 +405,18 @@ else:
                     ax.yaxis.set_major_locator(MultipleLocator(12))
                     ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
                     ax.yaxis.set_minor_locator(MultipleLocator(6))
-                    ax.set_xlabel("period [years]", size = 20)
+                    ax.set_xlabel("NINO3.4 period [years]", size = 20)
                     # plt.colorbar(cs)
                     ax.grid()
                     if i % 2 == 0:
-                        ax.set_ylabel("period [years]", size = 20)
+                        ax.set_ylabel("ExA -- PC2 period [years]", size = 20)
                     else:
                         # fig.colorbar(cs, ax = ax, shrink = 0.5)
                         pass
                     i += 1
 
-                plt.savefig('plots/Sergey-Nino34-%s-CMImap4bin%d.png' % (CMIP5model, num_ts))
-                # plt.savefig('plots/Nino34-obs-linear-SST-20PC-L3-multiplicative-seasonal-std-against-basicERM.png')
+                # plt.savefig('plots/Sergey-Nino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
+                plt.savefig('plots/Nino%s-obs-vs-ExA-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
@@ -425,7 +431,7 @@ else:
             labs = ['PHASE', 'PHASE', 'AMP', 'AMP']
             for ax, cont, tit, lab in zip(axs, plot, tits, labs):
                 ax = plt.subplot(ax)
-                cs = ax.contourf(x, y, cont, levels = np.arange(1, model_count+1, 1), cmap = plt.cm.get_cmap("jet"))
+                cs = ax.contourf(x, y, cont, levels = np.arange(1, len(model_count)+1, 1), cmap = plt.cm.get_cmap("jet"))
                 # cs = ax.pcolormesh(x, y, cont, vmin = 1)
                 ax.tick_params(axis='both', which='major', labelsize = 20)
                 ax.set_title(tit, size = 30)
@@ -445,7 +451,8 @@ else:
                     pass
                 i += 1
 
-            plt.savefig('plots/Sergey-Nino34-%s-CMImap4bin-overall.png' % (CMIP5model), bbox_inches = "tight")
+            # plt.savefig('plots/Sergey-Nino34-%s-CMImap4bin-overall.png' % (CMIP5model), bbox_inches = "tight")
+            plt.savefig('plots/Nino-obs_CMImap4bins3Dcond-against-basicERM-overall.png', bbox_inches = "tight")
 
             print np.unique(overall_ph_ph)
 
