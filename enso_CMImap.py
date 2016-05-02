@@ -17,7 +17,7 @@ use_PRO_model = False
 if COMPUTE:
     import platform
     if platform.system() == "Linux":
-        sys.path.append('/home/nikola/Work/phd/multi-scale')
+        sys.path.append('/home/nikolaj/Work/phd/multi-scale')
     elif platform.system() == "Darwin":
         sys.path.append('/Users/nikola/work-ui/multi-scale')
 
@@ -35,8 +35,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     # enso = DataField()
 
     enso = load_enso_index("nino%sraw.txt" % num_ts, num_ts, date(1900, 1, 1), date(2011, 1, 1))
-    exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand-Sergey.txt")
-    enso.data = exa
+    # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand-Sergey.txt")
+    # enso.data = exa
     # enso.data = enso_raw[:, 1]
     # enso.data = np.zeros((1200,))
     # if '4k' in EMRmodel:
@@ -157,8 +157,8 @@ if COMPUTE:
 
                 for i in range(phase_phase_coherence.shape[0]):
                     sc_i = scales[i] / fourier_factor
-                    # wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
-                    wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                    wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                    # wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                     phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                     
                     for j in range(phase_phase_coherence.shape[1]):
@@ -196,10 +196,10 @@ if COMPUTE:
                         s = jobq.get()
                         if s is None:
                             break
-                        sg.construct_fourier_surrogates_spatial()
-                        sg.add_seasonality(mean, var, None)
+                        # sg.construct_fourier_surrogates_spatial()
+                        # sg.add_seasonality(mean, var, None)
 
-                        # sg.surr_data = s.copy()
+                        sg.surr_data = s.copy()
 
                         coh = np.zeros((sc.shape[0], sc.shape[0]))
                         cmi = np.zeros_like(phase_phase_coherence)
@@ -215,8 +215,8 @@ if COMPUTE:
                             
                             for j in range(coh.shape[1]):
                                 sc_j = sc[j] / fourier_factor
-                                wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
-                                # wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                                # wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                                wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                                 phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                                 amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
@@ -287,8 +287,8 @@ if COMPUTE:
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
-                # fname = ("Nino%s-obs-vs-ExA-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
-                fname = ("ExA-vs-ExA-Sergey-comb-mode_CMImap4bins3Dcond-500FT.bin")
+                fname = ("Nino%s-obs-vs-ExA-Sergey-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
+                # fname = ("Nino34-obs-vs-ExA-Sergey-comb-mode_CMImap4bins3Dcond-500FT.bin")
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
