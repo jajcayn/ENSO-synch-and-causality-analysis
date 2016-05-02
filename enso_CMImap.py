@@ -35,7 +35,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     # enso = DataField()
 
     enso = load_enso_index("nino%sraw.txt" % num_ts, num_ts, date(1900, 1, 1), date(2011, 1, 1))
-    exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")
+    exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand-Sergey.txt")
     enso.data = exa
     # enso.data = enso_raw[:, 1]
     # enso.data = np.zeros((1200,))
@@ -130,7 +130,7 @@ if COMPUTE:
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
             model_count = ['34']
-            exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")[-1024:]
+            exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand-Sergey.txt")[-1024:]
             # CMIP5model = None
 
             # for num_ts in range(model_count):
@@ -288,7 +288,7 @@ if COMPUTE:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
                 # fname = ("Nino%s-obs-vs-ExA-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
-                fname = ("ExA-vs-ExA-comb-mode_CMImap4bins3Dcond-500FT.bin")
+                fname = ("ExA-vs-ExA-Sergey-comb-mode_CMImap4bins3Dcond-500FT.bin")
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
