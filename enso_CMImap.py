@@ -17,7 +17,7 @@ use_PRO_model = False
 if COMPUTE:
     import platform
     if platform.system() == "Linux":
-        sys.path.append('/home/nikola/Work/phd/multi-scale')
+        sys.path.append('/home/nikolaj/Work/phd/multi-scale')
     elif platform.system() == "Darwin":
         sys.path.append('/Users/nikola/work-ui/multi-scale')
 
@@ -130,8 +130,12 @@ if COMPUTE:
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
             model_count = ['34']
+<<<<<<< HEAD
             # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")[-1024:]
             exa = np.loadtxt("PC1-wind-comb-mode-20CR-1900-2010-stand.txt")[-1024:]
+=======
+            exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand-Sergey.txt")[-1024:]
+>>>>>>> 445dac1369279519678fd25e1f2bb2e7879ed4b1
             # CMIP5model = None
 
             # for num_ts in range(model_count):
@@ -288,8 +292,13 @@ if COMPUTE:
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+<<<<<<< HEAD
                 fname = ("Nino%s-obs-vs-PC1-wind-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
                 # fname = ("ExA-vs-ExA-comb-mode_CMImap4bins3Dcond-500FT.bin" % (num_ts))
+=======
+                fname = ("Nino%s-obs-vs-ExA-Sergey-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
+                # fname = ("Nino34-obs-vs-ExA-Sergey-comb-mode_CMImap4bins3Dcond-500FT.bin")
+>>>>>>> 445dac1369279519678fd25e1f2bb2e7879ed4b1
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
