@@ -17,7 +17,7 @@ use_PRO_model = False
 if COMPUTE:
     import platform
     if platform.system() == "Linux":
-        sys.path.append('/home/nikolaj/Work/phd/multi-scale')
+        sys.path.append('/home/nikola/Work/phd/multi-scale')
     elif platform.system() == "Darwin":
         sys.path.append('/Users/nikola/work-ui/multi-scale')
 
@@ -35,8 +35,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     # enso = DataField()
 
     enso = load_enso_index("nino%sraw.txt" % num_ts, num_ts, date(1900, 1, 1), date(2011, 1, 1))
-    # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")
-    # enso.data = exa
+    exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")
+    enso.data = exa.copy()
     # enso.data = enso_raw[:, 1]
     # enso.data = np.zeros((1200,))
     # if '4k' in EMRmodel:
@@ -288,8 +288,8 @@ if COMPUTE:
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
-                fname = ("Nino%s-obs-vs-PC1-wind-comb-mode-reversed_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
-                # fname = ("ExA-vs-ExA-comb-mode_CMImap4bins3Dcond-500FT.bin" % (num_ts))
+                # fname = ("Nino%s-obs-vs-PC1-wind-comb-mode-reversed_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
+                fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
@@ -322,7 +322,7 @@ else:
 
         for num_ts in model_count:
             # fname = ("bins/Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
-            fname = ("bins/Nino%s-obs-vs-ExA-Sergey-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
+            fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
             # fname = 'bins/ExA-vs-ExA-Sergey-comb-mode_CMImap4bins3Dcond-500FT.bin'
             CUT = slice(0,NUM_SURR)
             # version = 3
@@ -418,7 +418,7 @@ else:
                     i += 1
 
                 # plt.savefig('plots/Sergey-Nino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
-                plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
+                plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
                 # plt.savefig('plots/ExA-vs-ExA-Sergey-comb-mode_CMImap4bins3Dcond-500FT.png')
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
