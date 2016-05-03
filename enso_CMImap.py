@@ -246,7 +246,8 @@ if COMPUTE:
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    surrs = sio.loadmat("DimaKon-Nino34-ERM-linear-SSTA.mat")['sstn']
+                    # surrs = sio.loadmat("DimaKon-Nino34-ERM-linear-SSTA.mat")['sstn']
+                    surrs = sio.loadmat("10m-wind-20PCs-L3-model-surrs.mat")['ExA_mode']
                     surrs = surrs[-1024:, :].copy()
 
                     
