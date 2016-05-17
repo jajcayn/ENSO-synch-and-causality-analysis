@@ -2,10 +2,11 @@
 *.bin
 *.png
 *.txt
-N34_CMIP5/
+CMIP5_NINO34/
 notebooks/
 plots/
 spectra/
+EMR/
 *.mat
 *.out
 *.csv
