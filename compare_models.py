@@ -151,3 +151,8 @@ print("Highest agreement PHASE x AMP MI: %s with %d // %d -- %.1f%%" % (models[i
 idx = numbers[:, 3, 0].argmax()
 print("Highest agreement PHASE x AMP CMI Gauss: %s with %d // %d -- %.1f%%" % (models[idx],
     numbers[idx, 3, 0], numbers[idx, 3, 1], numbers[idx, 3, 0] / float(numbers[idx, 3, 1]) * 100))
+
+ov = np.sum(numbers, axis = 1)
+idx = ov[:, 0].argmax()
+print("Highest agreement OVERALL: %s with %d // %d -- %.1f%%" % (models[idx],
+    ov[idx, 0], ov[idx, 1], ov[idx, 0] / float(ov[idx, 1]) * 100))

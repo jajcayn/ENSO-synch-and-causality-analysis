@@ -3,6 +3,7 @@
 *.png
 *.txt
 CMIP5_NINO34/
+N34_CMIP5/
 notebooks/
 plots/
 spectra/
