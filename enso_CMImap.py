@@ -35,9 +35,9 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     # enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
     # enso = DataField()
 
-    enso = load_enso_index("nino%sraw.txt" % num_ts, num_ts, date(1900, 1, 1), date(2011, 1, 1))
-    exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")
-    enso.data = exa.copy()
+    enso = load_enso_index("nino34raw.txt", '3.4', date(1900, 1, 1), date(2011, 1, 1))
+    # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")
+    # enso.data = exa.copy()
     # enso.data = enso_raw[:, 1]
     # enso.data = np.zeros((1200,))
     # if '4k' in EMRmodel:
@@ -65,7 +65,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
 
     if EMRmodel is not None:
         print("[%s] Loading EMR simulated syntethic ENSO time series..." % (str(datetime.now())))
-        raw = sio.loadmat("Sergey-Nino34-ERM-%s.mat" % (EMRmodel))['N34s']
+        raw = sio.loadmat("Nino34-%s.mat" % (EMRmodel))['N34s']
         enso.data = raw[:, num_ts] # same length as nino3.4 data
         # if '4k' in EMRmodel:
         #     enso.data = raw[-4096:, num_ts].copy()
@@ -83,7 +83,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
         # elif num_ts%3 == 2:
         #     dat = enso.get_date_from_ndx(7354)
         
-    enso.get_data_of_precise_length(length = 1024, end_date = enso.get_date_from_ndx(-1), copy = True)
+    enso.get_data_of_precise_length(length = 1332, end_date = enso.get_date_from_ndx(-1), copy = True)
 
 
     if NUM_SURR > 0:
@@ -121,7 +121,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['linear-SST-20PC-L3-multiplicative-5mon-snippets']
+CMIP5models = ['SST-x-wind-model']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -130,19 +130,19 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = ['34']
-            # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")[-1024:]
-            exa = np.loadtxt("PC1-wind-comb-mode-20CR-1900-2010-stand.txt")[-1024:]
+            model_count = 20
+            # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")[-1332:]
+            # exa = np.loadtxt("PC1-wind-comb-mode-20CR-1900-2010-stand.txt")[-1332:]
             # CMIP5model = None
 
-            # for num_ts in range(model_count):
-            for num_ts in model_count:
+            for num_ts in range(model_count):
+            # for num_ts in model_count:
 
                 # print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
                     # num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
                 # enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
-                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, False, None)
+                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, False, CMIP5model)
 
                 ## DATA
                 #prepare result matrices
@@ -159,8 +159,8 @@ if COMPUTE:
 
                 for i in range(phase_phase_coherence.shape[0]):
                     sc_i = scales[i] / fourier_factor
-                    # wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
-                    wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                    wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                    # wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                     phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                     
                     for j in range(phase_phase_coherence.shape[1]):
@@ -212,7 +212,7 @@ if COMPUTE:
 
                         for i in range(coh.shape[0]):
                             sc_i = sc[i] / fourier_factor
-                            wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                            wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                             phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                             
                             for j in range(coh.shape[1]):
@@ -247,9 +247,9 @@ if COMPUTE:
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    # surrs = sio.loadmat("DimaKon-Nino34-ERM-linear-SSTA.mat")['sstn']
-                    surrs = sio.loadmat("10m-wind-20PCs-L3-model-surrs.mat")['ExA_mode']
-                    surrs = surrs[-1024:, :].copy()
+                    surrs = sio.loadmat("Nino34-10PCs-surrs.mat")['N34s']
+                    # surrs = sio.loadmat("10m-wind-20PCs-L3-model-surrs.mat")['ExA_mode']
+                    # surrs = surrs[-1024:, :].copy()
 
                     
                     surr_completed = 0
@@ -324,8 +324,8 @@ else:
 
         for num_ts in model_count:
             # fname = ("bins/Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
-            fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
-            # fname = 'bins/ExA-vs-ExA-Sergey-comb-mode_CMImap4bins3Dcond-500FT.bin'
+            # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
+            fname = 'bins/PC1-wind-comb-mode-self_CMImap4bins3Dcond-against-basicERM.bin'
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
@@ -409,19 +409,19 @@ else:
                     ax.yaxis.set_major_locator(MultipleLocator(12))
                     ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
                     ax.yaxis.set_minor_locator(MultipleLocator(6))
-                    ax.set_xlabel("NINO3.4 period [years]", size = 20)
+                    ax.set_xlabel("PC1 -- 10m wind period [years]", size = 20)
                     # plt.colorbar(cs)
                     ax.grid()
                     if i % 2 == 0:
-                        ax.set_ylabel("ExA -- PC2 period [years]", size = 20)
+                        ax.set_ylabel("PC1 -- 10m wind period [years]", size = 20)
                     else:
                         # fig.colorbar(cs, ax = ax, shrink = 0.5)
                         pass
                     i += 1
 
                 # plt.savefig('plots/Sergey-Nino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
-                plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
-                # plt.savefig('plots/ExA-vs-ExA-Sergey-comb-mode_CMImap4bins3Dcond-500FT.png')
+                # plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
+                plt.savefig('plots/PC1-wind-comb-mode-self_CMImap4bins3Dcond-against-basicERM.png')
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
