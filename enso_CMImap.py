@@ -55,7 +55,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     #     fname = CMIP5model + '.txt'
     #     model = np.loadtxt('N34_CMIP5/' + fname)
     #     enso.data = model[:, num_ts]
-    with open("SST-EOFanalysis-input-PCs.bin", "rb") as f:
+    with open("SST-EOFanalysis-inputPCs.bin", "rb") as f:
         pcs = cPickle.load(f)
     pcs = pcs['PC']
     if num_ts != 2:
