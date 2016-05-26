@@ -55,6 +55,13 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     #     fname = CMIP5model + '.txt'
     #     model = np.loadtxt('N34_CMIP5/' + fname)
     #     enso.data = model[:, num_ts]
+    with open("SST-EOFanalysis-input-PCs.bin", "rb") as f:
+        pcs = cPickle.load(f)
+    pcs = pcs['PC']
+    if num_ts != 2:
+        enso.data = pcs[0, :]
+    elif num_ts == 2:
+        enso.data = pcs[3, :]
 
     if PROmodel:
         print("[%s] Integrating PRO model which will be used instead of ENSO SSTs..." % (str(datetime.now())))
@@ -103,7 +110,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     # enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = True)
     print("[%s] Data loaded with shape %s" % (str(datetime.now()), enso.data.shape))
 
-    return enso, enso_sg, a
+    return enso, enso_sg, a, pcs
 
 def phase_diff(ph1, ph2):
     ph = ph1 - ph2
@@ -130,8 +137,8 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 20
-            exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")[-1332:]
+            model_count = 3
+            # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")[-1332:]
             # exa = np.loadtxt("PC1-wind-comb-mode-20CR-1900-2010-stand.txt")[-1332:]
             # CMIP5model = None
 
@@ -142,7 +149,13 @@ if COMPUTE:
                     # num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
                 # enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
-                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, False, CMIP5model)
+                enso, enso_sg, seasonality, pcs = load_enso_SSTs(num_ts, False, None)
+                if num_ts == 0:
+                    exa = enso.data.copy() # 1 -> 1
+                elif num_ts == 1:
+                    exa = pcs[3, :] # 1 -> 4
+                elif num_ts == 2:
+                    exa = pcs[0, :] # 4 -> 1
 
                 ## DATA
                 #prepare result matrices
@@ -198,10 +211,10 @@ if COMPUTE:
                         s = jobq.get()
                         if s is None:
                             break
-                        # sg.construct_fourier_surrogates_spatial()
-                        # sg.add_seasonality(mean, var, None)
+                        sg.construct_fourier_surrogates_spatial()
+                        sg.add_seasonality(mean, var, None)
 
-                        sg.surr_data = s.copy()
+                        # sg.surr_data = s.copy()
 
                         coh = np.zeros((sc.shape[0], sc.shape[0]))
                         cmi = np.zeros_like(phase_phase_coherence)
@@ -247,7 +260,7 @@ if COMPUTE:
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    surrs = sio.loadmat("Nino34-10PCs-surrs.mat")['N34s']
+                    # surrs = sio.loadmat("Nino34-10PCs-surrs.mat")['N34s']
                     # surrs = sio.loadmat("10m-wind-20PCs-L3-model-surrs.mat")['ExA_mode']
                     # surrs = surrs[-1024:, :].copy()
 
@@ -260,8 +273,8 @@ if COMPUTE:
                     jobq = Queue()
                     resq = Queue()
                     for i in range(NUM_SURR):
-                        jobq.put(surrs[:, i])
-                        # jobq.put(1)
+                        # jobq.put(surrs[:, i])
+                        jobq.put(1)
                     for i in range(WRKRS):
                         jobq.put(None)
 
@@ -289,8 +302,8 @@ if COMPUTE:
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
-                fname = ("Nino34-%s-vs-ExA_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
-                # fname = ("Nino%s-obs-vs-PC1-wind-comb-mode-reversed_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
+                # fname = ("Nino34-%s-vs-ExA_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+                fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
@@ -302,7 +315,7 @@ if COMPUTE:
 
 
 else:
-    CMIP5models = ['linear-SST-20PC-L3-multiplicative-5mon-snippets']
+    CMIP5models = ['SST-x-wind-30PCs-vs-ExA-reversed']
     BINS = 4
     PUB = False
     for CMIP5model in CMIP5models:
@@ -312,7 +325,7 @@ else:
         if PUB:
             model_count = 1
         else:
-            model_count = 1
+            model_count = 8
         # CMIP5model = None
         scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
         overall_ph_ph = np.zeros((scales.shape[0], scales.shape[0]))
@@ -320,12 +333,12 @@ else:
         overall_ph_amp = np.zeros_like(overall_ph_ph)
         overall_ph_amp_cmi = np.zeros_like(overall_ph_ph)
 
-        model_count = ['34']
+        # model_count = ['34']
 
-        for num_ts in model_count:
-            # fname = ("bins/Sergey-Nino34-ERM-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+        for num_ts in range(model_count):
+            fname = ("bins/wind-x-sst-model/Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
             # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
-            fname = 'bins/PC1-wind-comb-mode-self_CMImap4bins3Dcond-against-basicERM.bin'
+            # fname = 'bins/PC1-wind-comb-mode-self_CMImap4bins3Dcond-against-basicERM.bin'
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
@@ -409,19 +422,19 @@ else:
                     ax.yaxis.set_major_locator(MultipleLocator(12))
                     ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
                     ax.yaxis.set_minor_locator(MultipleLocator(6))
-                    ax.set_xlabel("PC1 -- 10m wind period [years]", size = 20)
+                    ax.set_xlabel("ExA -- PC2 period [years]", size = 20)
                     # plt.colorbar(cs)
                     ax.grid()
                     if i % 2 == 0:
-                        ax.set_ylabel("PC1 -- 10m wind period [years]", size = 20)
+                        ax.set_ylabel("Nino34 period [years]", size = 20)
                     else:
                         # fig.colorbar(cs, ax = ax, shrink = 0.5)
                         pass
                     i += 1
 
-                # plt.savefig('plots/Sergey-Nino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
+                plt.savefig('plots/wind-x-sst-model/Nino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
                 # plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
-                plt.savefig('plots/PC1-wind-comb-mode-self_CMImap4bins3Dcond-against-basicERM.png')
+                # plt.savefig('plots/PC1-wind-comb-mode-self_CMImap4bins3Dcond-against-basicERM.png')
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
@@ -436,7 +449,7 @@ else:
             labs = ['PHASE', 'PHASE', 'AMP', 'AMP']
             for ax, cont, tit, lab in zip(axs, plot, tits, labs):
                 ax = plt.subplot(ax)
-                cs = ax.contourf(x, y, cont, levels = np.arange(1, len(model_count)+1, 1), cmap = plt.cm.get_cmap("jet"))
+                cs = ax.contourf(x, y, cont, levels = np.arange(1, model_count+1, 1), cmap = plt.cm.get_cmap("jet"))
                 # cs = ax.pcolormesh(x, y, cont, vmin = 1)
                 ax.tick_params(axis='both', which='major', labelsize = 20)
                 ax.set_title(tit, size = 30)
@@ -456,8 +469,8 @@ else:
                     pass
                 i += 1
 
-            # plt.savefig('plots/Sergey-Nino34-%s-CMImap4bin-overall.png' % (CMIP5model), bbox_inches = "tight")
-            plt.savefig('plots/Nino-obs_CMImap4bins3Dcond-against-basicERM-overall.png', bbox_inches = "tight")
+            plt.savefig('plots/wind-x-sst-model/Nino34-%s-CMImap4bin-overall.png' % (CMIP5model), bbox_inches = "tight")
+            # plt.savefig('plots/wind-x-sst-model/Nino-obs_CMImap4bins3Dcond-against-basicERM-overall.png', bbox_inches = "tight")
 
             print np.unique(overall_ph_ph)
 
