@@ -110,7 +110,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     # enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = True)
     print("[%s] Data loaded with shape %s" % (str(datetime.now()), enso.data.shape))
 
-    return enso, enso_sg, a, pcs
+    return enso, enso_sg, a#, pcs
 
 def phase_diff(ph1, ph2):
     ph = ph1 - ph2
@@ -149,7 +149,7 @@ if COMPUTE:
                     # num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
                 # enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
-                enso, enso_sg, seasonality, pcs = load_enso_SSTs(num_ts, False, CMIP5model)
+                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, False, CMIP5model)
                 # if num_ts == 0:
                 #     exa = enso.data.copy() # 1 -> 1
                 # elif num_ts == 1:
