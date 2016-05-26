@@ -55,13 +55,13 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
     #     fname = CMIP5model + '.txt'
     #     model = np.loadtxt('N34_CMIP5/' + fname)
     #     enso.data = model[:, num_ts]
-    with open("SST-EOFanalysis-inputPCs.bin", "rb") as f:
-        pcs = cPickle.load(f)
-    pcs = pcs['PC']
-    if num_ts != 2:
-        enso.data = pcs[0, :]
-    elif num_ts == 2:
-        enso.data = pcs[3, :]
+    # with open("SST-EOFanalysis-inputPCs.bin", "rb") as f:
+    #     pcs = cPickle.load(f)
+    # pcs = pcs['PC']
+    # if num_ts != 2:
+    #     enso.data = pcs[0, :]
+    # elif num_ts == 2:
+    #     enso.data = pcs[3, :]
 
     if PROmodel:
         print("[%s] Integrating PRO model which will be used instead of ENSO SSTs..." % (str(datetime.now())))
@@ -128,7 +128,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['SST-x-wind-model']
+CMIP5models = ['SST-x-wind-40PCsel']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -137,7 +137,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 3
+            model_count = 20
             # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")[-1332:]
             # exa = np.loadtxt("PC1-wind-comb-mode-20CR-1900-2010-stand.txt")[-1332:]
             # CMIP5model = None
@@ -149,13 +149,13 @@ if COMPUTE:
                     # num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
                 # enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
-                enso, enso_sg, seasonality, pcs = load_enso_SSTs(num_ts, False, None)
-                if num_ts == 0:
-                    exa = enso.data.copy() # 1 -> 1
-                elif num_ts == 1:
-                    exa = pcs[3, :] # 1 -> 4
-                elif num_ts == 2:
-                    exa = pcs[0, :] # 4 -> 1
+                enso, enso_sg, seasonality, pcs = load_enso_SSTs(num_ts, False, CMIP5model)
+                # if num_ts == 0:
+                #     exa = enso.data.copy() # 1 -> 1
+                # elif num_ts == 1:
+                #     exa = pcs[3, :] # 1 -> 4
+                # elif num_ts == 2:
+                #     exa = pcs[0, :] # 4 -> 1
 
                 ## DATA
                 #prepare result matrices
@@ -178,8 +178,8 @@ if COMPUTE:
                     
                     for j in range(phase_phase_coherence.shape[1]):
                         sc_j = scales[j] / fourier_factor
-                        # wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
-                        wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                        wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                        # wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                         phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                         amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
@@ -211,10 +211,10 @@ if COMPUTE:
                         s = jobq.get()
                         if s is None:
                             break
-                        sg.construct_fourier_surrogates_spatial()
-                        sg.add_seasonality(mean, var, None)
+                        # sg.construct_fourier_surrogates_spatial()
+                        # sg.add_seasonality(mean, var, None)
 
-                        # sg.surr_data = s.copy()
+                        sg.surr_data = s.copy()
 
                         coh = np.zeros((sc.shape[0], sc.shape[0]))
                         cmi = np.zeros_like(phase_phase_coherence)
@@ -230,8 +230,8 @@ if COMPUTE:
                             
                             for j in range(coh.shape[1]):
                                 sc_j = sc[j] / fourier_factor
-                                # wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
-                                wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                                wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                                # wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                                 phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                                 amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
@@ -260,7 +260,7 @@ if COMPUTE:
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    # surrs = sio.loadmat("Nino34-10PCs-surrs.mat")['N34s']
+                    surrs = sio.loadmat("Nino34-SST-x-wind-40PCsel-surrs.mat")['N34s']
                     # surrs = sio.loadmat("10m-wind-20PCs-L3-model-surrs.mat")['ExA_mode']
                     # surrs = surrs[-1024:, :].copy()
 
@@ -273,8 +273,8 @@ if COMPUTE:
                     jobq = Queue()
                     resq = Queue()
                     for i in range(NUM_SURR):
-                        # jobq.put(surrs[:, i])
-                        jobq.put(1)
+                        jobq.put(surrs[:, i])
+                        # jobq.put(1)
                     for i in range(WRKRS):
                         jobq.put(None)
 
@@ -302,8 +302,8 @@ if COMPUTE:
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
-                # fname = ("Nino34-%s-vs-ExA_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
-                fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
+                fname = ("Nino34-%s-self_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+                # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
