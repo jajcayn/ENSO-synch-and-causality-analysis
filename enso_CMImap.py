@@ -10,7 +10,7 @@ import sys
 import matplotlib.gridspec as gridspec
 import scipy.io as sio
 
-COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = False
 
@@ -316,7 +316,7 @@ if COMPUTE:
 
 
 else:
-    CMIP5models = ['SST-x-wind-30PCs-vs-ExA-reversed']
+    CMIP5models = ['SST-x-wind-40PCsel-ExA-to-Nino']
     BINS = 4
     PUB = False
     for CMIP5model in CMIP5models:
@@ -326,7 +326,7 @@ else:
         if PUB:
             model_count = 1
         else:
-            model_count = 8
+            model_count = 20
         # CMIP5model = None
         scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
         overall_ph_ph = np.zeros((scales.shape[0], scales.shape[0]))
@@ -337,9 +337,9 @@ else:
         # model_count = ['34']
 
         for num_ts in range(model_count):
-            fname = ("bins/wind-x-sst-model/Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+            fname = ("bins/Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
             # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
-            # fname = 'bins/PC1-wind-comb-mode-self_CMImap4bins3Dcond-against-basicERM.bin'
+            # fname = 'bins/Nino34-obs_CMImap4bins3Dcond-against-basicERM.bin'
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
@@ -382,12 +382,12 @@ else:
                 gs = gridspec.GridSpec(1, 2)
                 gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
                 axs = [gs[0,0], gs[0,1]]
-                plot = [res_phase_cmi.T, res_phase_amp_CMI.T]
-                #plot = [res_phase_coh.T, res_phase_amp_CMI.T]
-                tits = ['PHASE-PHASE CAUSALITY', 'PHASE-AMP CAUSALITY']
-                #tits = ['PHASE SYNCHRONIZATION', '']
-                labs = ['PHASE', 'AMP']
-                #labs = ['PHASE', '']
+                # plot = [res_phase_cmi.T, res_phase_amp_CMI.T]
+                plot = [res_phase_coh.T, res_phase_amp_CMI.T]
+                # tits = ['PHASE-PHASE CAUSALITY', 'PHASE-AMP CAUSALITY']
+                tits = ['PHASE SYNCHRONIZATION', '']
+                # labs = ['PHASE', 'AMP']
+                labs = ['PHASE', '']
                 for ax, cont, tit, lab in zip(axs, plot, tits, labs):
                     ax = plt.subplot(ax)
                     cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
@@ -403,7 +403,7 @@ else:
                     # plt.colorbar(cs)
                     ax.grid()
                     ax.set_ylabel("PERIOD %s [years]" % lab, size = 23)
-                plt.savefig('plots/pub.eps', bbox_inches = "tight")
+                plt.savefig('plots/pub2.eps', bbox_inches = "tight")
             else:
                 fig = plt.figure(figsize=(15,15))
                 gs = gridspec.GridSpec(2, 2)
@@ -423,19 +423,19 @@ else:
                     ax.yaxis.set_major_locator(MultipleLocator(12))
                     ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
                     ax.yaxis.set_minor_locator(MultipleLocator(6))
-                    ax.set_xlabel("ExA -- PC2 period [years]", size = 20)
+                    ax.set_xlabel("ExA period [years]", size = 20)
                     # plt.colorbar(cs)
                     ax.grid()
                     if i % 2 == 0:
-                        ax.set_ylabel("Nino34 period [years]", size = 20)
+                        ax.set_ylabel("Nino3.4 period [years]", size = 20)
                     else:
                         # fig.colorbar(cs, ax = ax, shrink = 0.5)
                         pass
                     i += 1
 
-                plt.savefig('plots/wind-x-sst-model/Nino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
+                plt.savefig('plots/Nino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
                 # plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
-                # plt.savefig('plots/PC1-wind-comb-mode-self_CMImap4bins3Dcond-against-basicERM.png')
+                # plt.savefig('plots/SST-PC4-vs-PC1_CMImap4bins3Dcond-against-basicERM.png')
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
@@ -470,7 +470,7 @@ else:
                     pass
                 i += 1
 
-            plt.savefig('plots/wind-x-sst-model/Nino34-%s-CMImap4bin-overall.png' % (CMIP5model), bbox_inches = "tight")
+            plt.savefig('plots/Nino34-%s-CMImap4bin-overall.png' % (CMIP5model), bbox_inches = "tight")
             # plt.savefig('plots/wind-x-sst-model/Nino-obs_CMImap4bins3Dcond-against-basicERM-overall.png', bbox_inches = "tight")
 
             print np.unique(overall_ph_ph)
