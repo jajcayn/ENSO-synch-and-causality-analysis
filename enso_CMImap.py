@@ -29,7 +29,7 @@ if COMPUTE:
     from multiprocessing import Process, Queue
 
 
-def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
+def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = None):
     # load enso SSTs
     print("[%s] Loading monthly ENSO SSTs..." % str(datetime.now()))
     # enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
@@ -69,6 +69,13 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None):
         PROmodel_enso = ENSO_PROmodel(length = enso.data.shape[0], daily = False, damped = True, ENSOperiod = 3.75, modulation = 2, lambda0 = 0.4)
         PROmodel_enso.integrate_PROmodel()
         enso.data = PROmodel_enso.data.copy()
+
+    if DDEmodel is not None:
+        print("[%s] Integrating DDE model which will be used instead of ENSO SSTs..." % (str(datetime.now())))
+        from enso_dde_model import enso_dde_model
+        kappa, tau, b, subsample = DDEmodel
+        t, h = enso_dde_model(kappa = kappa, tau = tau, b = b, nyears = enso.time.shape[0]//12+10, subsample_to_monthly = subsample)
+        enso.data = h.copy()
 
     if EMRmodel is not None:
         print("[%s] Loading EMR (%s) simulated syntethic ENSO time series..." % (EMRmodel, str(datetime.now())))
@@ -128,7 +135,7 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = ['SST-x-SLP-x-wind-30PCsel']
+CMIP5models = [[50., 0.42, 1., True], [5., 0.65, 1., True], [50., 0.508, 1., True], [11., 0.56, 1.4, True]]
 
 if COMPUTE:
     for BINS in bins_list:
@@ -137,7 +144,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 20
+            model_count = 1
             # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")[-1332:]
             # exa = np.loadtxt("PC1-wind-comb-mode-20CR-1900-2010-stand.txt")[-1332:]
             # CMIP5model = None
@@ -145,11 +152,11 @@ if COMPUTE:
             for num_ts in range(model_count):
             # for num_ts in model_count:
 
-                # print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
-                    # num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
+                print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
+                    num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
                 # enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
-                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, False, CMIP5model)
+                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = False, EMRmodel = None, DDEmodel = CMIP5model)
                 #exa = sio.loadmat('Nino34-SST-x-wind-40PCsel.mat')['wind_sim'][:, 1, num_ts]
                 # if num_ts == 0:
                 #     exa = enso.data.copy() # 1 -> 1
@@ -212,10 +219,10 @@ if COMPUTE:
                         s = jobq.get()
                         if s is None:
                             break
-                        # sg.construct_fourier_surrogates_spatial()
-                        # sg.add_seasonality(mean, var, None)
+                        sg.construct_fourier_surrogates_spatial()
+                        sg.add_seasonality(mean, var, None)
 
-                        sg.surr_data = s.copy()
+                        # sg.surr_data = s.copy()
 
                         coh = np.zeros((sc.shape[0], sc.shape[0]))
                         cmi = np.zeros_like(phase_phase_coherence)
@@ -261,7 +268,7 @@ if COMPUTE:
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    surrs = sio.loadmat("Nino34-SST-x-SLP-x-wind-30PCsel-surrs.mat")['N34s']
+                    # surrs = sio.loadmat("Nino34-SST-x-SLP-x-wind-30PCsel-surrs.mat")['N34s']
                     # surrs = sio.loadmat("10m-wind-20PCs-L3-model-surrs.mat")['ExA_mode']
                     # surrs = surrs[-1024:, :].copy()
 
@@ -274,8 +281,8 @@ if COMPUTE:
                     jobq = Queue()
                     resq = Queue()
                     for i in range(NUM_SURR):
-                        jobq.put(surrs[:, i])
-                        # jobq.put(1)
+                        # jobq.put(surrs[:, i])
+                        jobq.put(1)
                     for i in range(WRKRS):
                         jobq.put(None)
 
@@ -303,7 +310,8 @@ if COMPUTE:
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
-                fname = ("Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+                fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
+                # fname = ("Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
                 with open(fname, 'wb') as f:
