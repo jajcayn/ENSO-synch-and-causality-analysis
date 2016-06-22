@@ -80,7 +80,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     if EMRmodel is not None:
         print("[%s] Loading EMR (%s) simulated syntethic ENSO time series..." % (EMRmodel, str(datetime.now())))
         raw = sio.loadmat("Nino34-%s.mat" % (EMRmodel))['N34s']
-        enso.data = raw[:, num_ts] # same length as nino3.4 data
+        enso.data = raw[num_ts, :] # same length as nino3.4 data
         # if '4k' in EMRmodel:
         #     enso.data = raw[-4096:, num_ts].copy()
         # elif '8k' in EMRmodel:  
@@ -135,7 +135,8 @@ bins_list = [4]
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
-CMIP5models = [[50., 0.42, 1., True], [5., 0.65, 1., True], [50., 0.508, 1., True], [11., 0.56, 1.4, True]]
+#CMIP5models = [[50., 0.42, 1., True], [5., 0.65, 1., True], [50., 0.508, 1., True], [11., 0.56, 1.4, True]]
+CMIP5models = ['linear-20PC-L3-seasonal']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -144,7 +145,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 1
+            model_count = 20
             # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")[-1332:]
             # exa = np.loadtxt("PC1-wind-comb-mode-20CR-1900-2010-stand.txt")[-1332:]
             # CMIP5model = None
@@ -156,7 +157,7 @@ if COMPUTE:
                     num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
                 # enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = use_PRO_model, EMRmodel = CMIP5model)
-                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = False, EMRmodel = None, DDEmodel = CMIP5model)
+                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = False, EMRmodel = CMIP5model, DDEmodel = None)
                 #exa = sio.loadmat('Nino34-SST-x-wind-40PCsel.mat')['wind_sim'][:, 1, num_ts]
                 # if num_ts == 0:
                 #     exa = enso.data.copy() # 1 -> 1
@@ -219,10 +220,10 @@ if COMPUTE:
                         s = jobq.get()
                         if s is None:
                             break
-                        sg.construct_fourier_surrogates_spatial()
-                        sg.add_seasonality(mean, var, None)
+                        # sg.construct_fourier_surrogates_spatial()
+                        # sg.add_seasonality(mean, var, None)
 
-                        # sg.surr_data = s.copy()
+                        sg.surr_data = s.copy()
 
                         coh = np.zeros((sc.shape[0], sc.shape[0]))
                         cmi = np.zeros_like(phase_phase_coherence)
@@ -268,7 +269,7 @@ if COMPUTE:
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    # surrs = sio.loadmat("Nino34-SST-x-SLP-x-wind-30PCsel-surrs.mat")['N34s']
+                    surrs = sio.loadmat("Nino34-linear-20PC-L3-seasonal-surrs.mat")['N34s']
                     # surrs = sio.loadmat("10m-wind-20PCs-L3-model-surrs.mat")['ExA_mode']
                     # surrs = surrs[-1024:, :].copy()
 
@@ -281,8 +282,8 @@ if COMPUTE:
                     jobq = Queue()
                     resq = Queue()
                     for i in range(NUM_SURR):
-                        # jobq.put(surrs[:, i])
-                        jobq.put(1)
+                        jobq.put(surrs[i, :])
+                        # jobq.put(1)
                     for i in range(WRKRS):
                         jobq.put(None)
 
@@ -310,8 +311,8 @@ if COMPUTE:
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
-                fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
-                # fname = ("Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+                # fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
+                fname = ("Python-Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
                 with open(fname, 'wb') as f:
@@ -324,7 +325,7 @@ if COMPUTE:
 
 
 else:
-    CMIP5models = ['SST-x-wind-40PCsel-ExA-to-Nino']
+    CMIP5models = [[50., 0.42, 1., True], [5., 0.65, 1., True], [50., 0.508, 1., True], [11., 0.56, 1.4, True]]
     BINS = 4
     PUB = False
     for CMIP5model in CMIP5models:
@@ -334,7 +335,7 @@ else:
         if PUB:
             model_count = 1
         else:
-            model_count = 20
+            model_count = 1
         # CMIP5model = None
         scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
         overall_ph_ph = np.zeros((scales.shape[0], scales.shape[0]))
@@ -345,7 +346,8 @@ else:
         # model_count = ['34']
 
         for num_ts in range(model_count):
-            fname = ("bins/Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+            #fname = ("bins/Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+            fname = ("bins/DDE/DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
             # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
             # fname = 'bins/Nino34-obs_CMImap4bins3Dcond-against-basicERM.bin'
             CUT = slice(0,NUM_SURR)
@@ -441,45 +443,46 @@ else:
                         pass
                     i += 1
 
-                plt.savefig('plots/Nino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
+                # plt.savefig('plots/Nino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
+                plt.savefig("plots/DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.png" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
                 # plt.savefig('plots/SST-PC4-vs-PC1_CMImap4bins3Dcond-against-basicERM.png')
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
-        if not PUB:
-            fig = plt.figure(figsize=(15,15))
-            gs = gridspec.GridSpec(2, 2)
-            gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
-            i = 0
-            axs = [gs[0,0], gs[0,1], gs[1,0], gs[1,1]]
-            plot = [overall_ph_ph.T, overall_ph_ph_cmi.T, overall_ph_amp.T, overall_ph_amp_cmi.T]
-            tits = ['PHASE SYNCHRONIZATION', 'PHASE-PHASE CAUSALITY', 'PHASE x AMP MI', 'PHASE-AMP CAUSALITY']
-            labs = ['PHASE', 'PHASE', 'AMP', 'AMP']
-            for ax, cont, tit, lab in zip(axs, plot, tits, labs):
-                ax = plt.subplot(ax)
-                cs = ax.contourf(x, y, cont, levels = np.arange(1, model_count+1, 1), cmap = plt.cm.get_cmap("jet"))
-                # cs = ax.pcolormesh(x, y, cont, vmin = 1)
-                ax.tick_params(axis='both', which='major', labelsize = 20)
-                ax.set_title(tit, size = 30)
-                ax.xaxis.set_major_locator(MultipleLocator(12))
-                ax.xaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
-                ax.xaxis.set_minor_locator(MultipleLocator(6))
-                ax.yaxis.set_major_locator(MultipleLocator(12))
-                ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
-                ax.yaxis.set_minor_locator(MultipleLocator(6))
-                ax.set_xlabel("PERIOD PHASE [years]", size = 23)
-                plt.colorbar(cs)
-                ax.grid()
-                if i % 1 == 0:
-                    ax.set_ylabel("PERIOD %s [years]" % lab, size = 23)
-                else:
-                    # fig.colorbar(cs, ax = ax, shrink = 0.5)
-                    pass
-                i += 1
+        # if not PUB:
+        #     fig = plt.figure(figsize=(15,15))
+        #     gs = gridspec.GridSpec(2, 2)
+        #     gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
+        #     i = 0
+        #     axs = [gs[0,0], gs[0,1], gs[1,0], gs[1,1]]
+        #     plot = [overall_ph_ph.T, overall_ph_ph_cmi.T, overall_ph_amp.T, overall_ph_amp_cmi.T]
+        #     tits = ['PHASE SYNCHRONIZATION', 'PHASE-PHASE CAUSALITY', 'PHASE x AMP MI', 'PHASE-AMP CAUSALITY']
+        #     labs = ['PHASE', 'PHASE', 'AMP', 'AMP']
+        #     for ax, cont, tit, lab in zip(axs, plot, tits, labs):
+        #         ax = plt.subplot(ax)
+        #         cs = ax.contourf(x, y, cont, levels = np.arange(1, model_count+1, 1), cmap = plt.cm.get_cmap("jet"))
+        #         # cs = ax.pcolormesh(x, y, cont, vmin = 1)
+        #         ax.tick_params(axis='both', which='major', labelsize = 20)
+        #         ax.set_title(tit, size = 30)
+        #         ax.xaxis.set_major_locator(MultipleLocator(12))
+        #         ax.xaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
+        #         ax.xaxis.set_minor_locator(MultipleLocator(6))
+        #         ax.yaxis.set_major_locator(MultipleLocator(12))
+        #         ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
+        #         ax.yaxis.set_minor_locator(MultipleLocator(6))
+        #         ax.set_xlabel("PERIOD PHASE [years]", size = 23)
+        #         plt.colorbar(cs)
+        #         ax.grid()
+        #         if i % 1 == 0:
+        #             ax.set_ylabel("PERIOD %s [years]" % lab, size = 23)
+        #         else:
+        #             # fig.colorbar(cs, ax = ax, shrink = 0.5)
+        #             pass
+        #         i += 1
 
-            plt.savefig('plots/Nino34-%s-CMImap4bin-overall.png' % (CMIP5model), bbox_inches = "tight")
-            # plt.savefig('plots/wind-x-sst-model/Nino-obs_CMImap4bins3Dcond-against-basicERM-overall.png', bbox_inches = "tight")
+        #     plt.savefig('plots/Nino34-%s-CMImap4bin-overall.png' % (CMIP5model), bbox_inches = "tight")
+        #     # plt.savefig('plots/wind-x-sst-model/Nino-obs_CMImap4bins3Dcond-against-basicERM-overall.png', bbox_inches = "tight")
 
-            print np.unique(overall_ph_ph)
+        #     print np.unique(overall_ph_ph)
 
