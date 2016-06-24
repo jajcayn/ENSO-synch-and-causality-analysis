@@ -325,7 +325,7 @@ if COMPUTE:
 
 
 else:
-    CMIP5models = ['SST-x-SLP-x-wind-30PCsel']
+    CMIP5models = ['linear-20PC-L3-seasonal']
     BINS = 4
     PUB = False
     for CMIP5model in CMIP5models:
@@ -346,7 +346,7 @@ else:
         # model_count = ['34']
 
         for num_ts in range(model_count):
-            fname = ("bins/sst-x-slp-wind/Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+            fname = ("bins/python-model/Python-Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
             # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
             # fname = 'bins/Nino34-obs_CMImap4bins3Dcond-against-basicERM.bin'
             CUT = slice(0,NUM_SURR)
@@ -442,7 +442,7 @@ else:
                         pass
                     i += 1
 
-                plt.savefig('plots/Nino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
+                plt.savefig('plots/PNino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
                 # plt.savefig("plots/DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.png" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
                 # plt.savefig('plots/SST-PC4-vs-PC1_CMImap4bins3Dcond-against-basicERM.png')
@@ -480,7 +480,7 @@ else:
                     pass
                 i += 1
 
-            plt.savefig('plots/Nino34-%s-CMImap4bin-overall.png' % (CMIP5model), bbox_inches = "tight")
+            plt.savefig('plots/PNino34-%s-CMImap4bin-overall.png' % (CMIP5model), bbox_inches = "tight")
             # plt.savefig('plots/wind-x-sst-model/Nino-obs_CMImap4bins3Dcond-against-basicERM-overall.png', bbox_inches = "tight")
 
             print np.unique(overall_ph_ph)
