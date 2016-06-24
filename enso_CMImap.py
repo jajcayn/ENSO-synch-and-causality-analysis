@@ -10,7 +10,7 @@ import sys
 import matplotlib.gridspec as gridspec
 import scipy.io as sio
 
-COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = False
 
@@ -324,7 +324,7 @@ if COMPUTE:
 
 
 else:
-    CMIP5models = ['SST-x-wind-40PCsel-ExA-to-Nino']
+    CMIP5models = ['SST-x-SLP-x-wind-30PCsel']
     BINS = 4
     PUB = False
     for CMIP5model in CMIP5models:
@@ -345,7 +345,7 @@ else:
         # model_count = ['34']
 
         for num_ts in range(model_count):
-            fname = ("bins/Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+            fname = ("bins/sst-x-slp-wind/Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
             # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
             # fname = 'bins/Nino34-obs_CMImap4bins3Dcond-against-basicERM.bin'
             CUT = slice(0,NUM_SURR)
