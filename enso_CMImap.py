@@ -136,7 +136,7 @@ bins_list = [4]
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
 #CMIP5models = [[50., 0.42, 1., True], [5., 0.65, 1., True], [50., 0.508, 1., True], [11., 0.56, 1.4, True]]
-CMIP5models = ['delay-linear-20PC-L3-seasonal-d/5mon-k/50']
+CMIP5models = ['delay-linear-20PC-L3-seasonal-d:5mon-k:50']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -269,7 +269,7 @@ if COMPUTE:
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    surrs = sio.loadmat("Nino34-delay-linear-20PC-L3-seasonal-d/5mon-k/50-surrs.mat")['N34s']
+                    surrs = sio.loadmat("Nino34-delay-linear-20PC-L3-seasonal-d:5mon-k:50-surrs.mat")['N34s']
                     # surrs = sio.loadmat("10m-wind-20PCs-L3-model-surrs.mat")['ExA_mode']
                     # surrs = surrs[-1024:, :].copy()
 
