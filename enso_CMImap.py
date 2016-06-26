@@ -80,7 +80,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     if EMRmodel is not None:
         print("[%s] Loading EMR (%s) simulated syntethic ENSO time series..." % (EMRmodel, str(datetime.now())))
         raw = sio.loadmat("Nino34-%s.mat" % (EMRmodel))['N34s']
-        enso.data = raw[num_ts, :] # same length as nino3.4 data
+        enso.data = raw[num_ts, -1332:] # same length as nino3.4 data
         # if '4k' in EMRmodel:
         #     enso.data = raw[-4096:, num_ts].copy()
         # elif '8k' in EMRmodel:  
@@ -282,7 +282,7 @@ if COMPUTE:
                     jobq = Queue()
                     resq = Queue()
                     for i in range(NUM_SURR):
-                        jobq.put(surrs[i, :])
+                        jobq.put(surrs[i, -1332:])
                         # jobq.put(1)
                     for i in range(WRKRS):
                         jobq.put(None)
