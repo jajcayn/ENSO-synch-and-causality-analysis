@@ -136,7 +136,7 @@ bins_list = [4]
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
 #CMIP5models = [[50., 0.42, 1., True], [5., 0.65, 1., True], [50., 0.508, 1., True], [11., 0.56, 1.4, True]]
-# CMIP5models = ['delay-quad-10PCsel-L3-seasonal-d:6mon-k:50']
+CMIP5models = ['']
 
 if COMPUTE:
     for BINS in bins_list:
