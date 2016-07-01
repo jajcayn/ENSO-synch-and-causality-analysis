@@ -78,7 +78,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
         enso.data = h.copy()
 
     if EMRmodel is not None:
-        print("[%s] Loading EMR (%s) simulated syntethic ENSO time series..." % (EMRmodel, str(datetime.now())))
+        print("[%s] Loading EMR (%s) simulated syntethic ENSO time series..." % (str(datetime.now()), EMRmodel))
         raw = sio.loadmat("Nino34-%s.mat" % (EMRmodel))['N34s']
         enso.data = raw[num_ts, -1332:] # same length as nino3.4 data
         # if '4k' in EMRmodel:
