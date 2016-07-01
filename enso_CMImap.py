@@ -126,7 +126,7 @@ def phase_diff(ph1, ph2):
     return ph
 
 WVLT_SPAN = [5,93] # unit is month
-NUM_SURR = 500
+NUM_SURR = 100
 WRKRS = 20
 # BINS = 4
 bins_list = [4]
@@ -136,7 +136,9 @@ bins_list = [4]
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
 #CMIP5models = [[50., 0.42, 1., True], [5., 0.65, 1., True], [50., 0.508, 1., True], [11., 0.56, 1.4, True]]
-CMIP5models = ['']
+CMIP5models = ['delay-quad-10PCsel-L3-seasonal-d:4mon-k:50', 'delay-quad-10PCsel-L3-seasonal-d:5mon-k:50',
+    'delay-quad-10PCsel-L3-seasonal-d:7mon-k:50', 'delay-quad-10PCsel-L3-seasonal-d:8mon-k:50',
+    'delay-quad-10PCsel-L3-seasonal-d:6mon-k:10']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -153,10 +155,10 @@ if COMPUTE:
             for num_ts in range(model_count):
             # for num_ts in model_count:
 
-                # print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
-                #     num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
+                print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
+                    num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
-                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = True, EMRmodel = None, DDEmodel = None)
+                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = False, EMRmodel = CMIP5model, DDEmodel = None)
                 #exa = sio.loadmat('Nino34-SST-x-wind-40PCsel.mat')['wind_sim'][:, 1, num_ts]
                 # if num_ts == 0:
                 #     exa = enso.data.copy() # 1 -> 1
@@ -219,10 +221,10 @@ if COMPUTE:
                         s = jobq.get()
                         if s is None:
                             break
-                        sg.construct_fourier_surrogates_spatial()
-                        sg.add_seasonality(mean, var, None)
+                        # sg.construct_fourier_surrogates_spatial()
+                        # sg.add_seasonality(mean, var, None)
 
-                        # sg.surr_data = s.copy()
+                        sg.surr_data = s.copy()
 
                         coh = np.zeros((sc.shape[0], sc.shape[0]))
                         cmi = np.zeros_like(phase_phase_coherence)
@@ -268,7 +270,7 @@ if COMPUTE:
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    # surrs = sio.loadmat("Nino34-linear-20PC-L3-seasonal-surrs.mat")['N34s']
+                    surrs = sio.loadmat("Nino34-linear-20PC-L3-seasonal-surrs.mat")['N34s']
                     # surrs = sio.loadmat("10m-wind-20PCs-L3-model-surrs.mat")['ExA_mode']
                     # surrs = surrs[-1024:, :].copy()
 
@@ -281,8 +283,8 @@ if COMPUTE:
                     jobq = Queue()
                     resq = Queue()
                     for i in range(NUM_SURR):
-                        # jobq.put(surrs[i, -1332:])
-                        jobq.put(1)
+                        jobq.put(surrs[i, -1332:])
+                        # jobq.put(1)
                     for i in range(WRKRS):
                         jobq.put(None)
 
@@ -311,9 +313,9 @@ if COMPUTE:
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
-                # fname = ("Nino34-%s_CMImap4bins3Dcond%d-against-basicERMnondelay.bin" % (CMIP5model, num_ts))
+                fname = ("Nino34-%s_CMImap4bins3Dcond%d-against-basicERMnondelay.bin" % (CMIP5model, num_ts))
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
-                fname = ("PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
+                # fname = ("PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
