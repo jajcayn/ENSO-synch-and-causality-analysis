@@ -7,7 +7,7 @@ import cPickle
 import sys
 import matplotlib.gridspec as gridspec
 
-DEBUG = False
+DEBUG = True
 COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 

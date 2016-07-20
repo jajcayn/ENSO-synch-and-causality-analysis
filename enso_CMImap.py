@@ -19,6 +19,7 @@ if COMPUTE:
     if platform.system() == "Linux":
         sys.path.append('/home/nikola/Work/phd/multi-scale')
         sys.path.append('/home/nikolaj/Work/phd/multi-scale')
+        sys.path.append('/home/hartman/Work/Projects/cmi-analysis')
     elif platform.system() == "Darwin":
         sys.path.append('/Users/nikola/work-ui/multi-scale')
 
@@ -27,6 +28,7 @@ if COMPUTE:
     from src.data_class import DataField, load_enso_index
     from src.surrogates import SurrogateField
     from multiprocessing import Process, Queue
+    import cmi_estimation as cme
 
 
 def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = None):
@@ -130,15 +132,14 @@ NUM_SURR = 100
 WRKRS = 20
 # BINS = 4
 bins_list = [4]
+k = 32
 
 # CMIP5model = 'N34_CanESM2_0'# None for data or name of the model + _ + number of TS as more time series is available
 # CMIP5models = ['N34_CanESM2', 'N34_GFDLCM3', 'N34_GISSE2Hp1', 'N34_GISSE2Hp2', 'N34_GISSE2Hp3', 'N34_GISSE2Rp1']
 # CMIP5models += ['N34_GISSE2Rp2', 'N34_GISSE2Rp3', 'N34_HadGem2ES', 'N34_IPSL_CM5A_LR', 'N34_MIROC5', 'N34_MRICGCM3']
 # CMIP5models += ['N34_CCSM4', 'N34_CNRMCM5', 'N34_CSIROmk360']
 #CMIP5models = [[50., 0.42, 1., True], [5., 0.65, 1., True], [50., 0.508, 1., True], [11., 0.56, 1.4, True]]
-CMIP5models = ['delay-quad-10PCsel-L3-seasonal-d:4mon-k:50', 'delay-quad-10PCsel-L3-seasonal-d:5mon-k:50',
-    'delay-quad-10PCsel-L3-seasonal-d:7mon-k:50', 'delay-quad-10PCsel-L3-seasonal-d:8mon-k:50',
-    'delay-quad-10PCsel-L3-seasonal-d:6mon-k:10']
+CMIP5models = ['delay-quad-10PCsel-L3-seasonal-d:7mon-k:50']
 
 if COMPUTE:
     for BINS in bins_list:
@@ -193,22 +194,34 @@ if COMPUTE:
                         phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                         amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
-                        phase_phase_coherence[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
+                        #phase_phase_coherence[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
+                        # kNN --- David
+                        pp_data = np.vstack([phase_i, phase_j])
+                        xyz = np.array([0,1])
+                        phase_phase_coherence[i, j] = cme.estimate_cmi_knn(allin=pp_data, k=k, xyz=xyz, maxdim=pp_data.shape[0], T=pp_data.shape[1], norm=0,standardize=True)
 
                         # conditional mutual inf -- avg over lags 1 - 6 months
                         CMI = []
                         for tau in range(1, 7):
-                            CMI.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
-                                phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
+                            ppdf_data = np.vstack([phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]),phase_j[:-tau]])
+                            xyz = np.array([0,1])
+                            CMI.append(cme.estimate_cmi_knn(allin=ppdf_data, k=k, xyz=xyz, maxdim=ppdf_data.shape[0], T=ppdf_data.shape[1], norm=0,standardize=True))
+                            # CMI.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
+                            #     phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
                         phase_phase_CMI[i, j] = np.mean(np.array(CMI))
 
-                        phase_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
+                        # phase_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
+                        pa_data = np.vstack([phase_i, amp_j])
+                        xyz = np.array([0,1])
+                        phase_amp_MI[i, j] = cme.estimate_cmi_knn(allin=pa_data, k=k, xyz=xyz, maxdim=pa_data.shape[0], T=pa_data.shape[1], norm=0,standardize=True)
 
                         CMI2 = []
                         eta = np.int(scales[i] / 4)
                         for tau in range(1, 7): # possible 1-31
                             x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
-                            CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
+                            cond3_data = np.vstack([x,y,z])
+                            CMI2.append(cme.estimate_cmi_knn(allin=cond3_data, k=k, xyz=xyz, maxdim=cond3_data.shape[0], T=cond3_data.shape[1], norm=0,standardize=True))
+                            # CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
                         phase_amp_condMI[i, j] = np.mean(np.array(CMI2))
 
                 print("[%s] Analysis on data done." % str(datetime.now()))
@@ -245,22 +258,36 @@ if COMPUTE:
                                 phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                                 amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
-                                coh[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
+                                # coh[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
+                                pp_data = np.vstack([phase_i, phase_j])
+                                xyz = np.array([0,1])
+                                coh[i, j] = cme.estimate_cmi_knn(allin=pp_data, k=k, xyz=xyz, maxdim=pp_data.shape[0], T=pp_data.shape[1], norm=0,standardize=True)
 
                                 # conditional mutual inf -- avg over lags 1 - 6 months
                                 CMI_temp = []
                                 for tau in range(1, 7):
-                                    CMI_temp.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
-                                        phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
+                                    ppdf_data = np.vstack([phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]),phase_j[:-tau]])
+                                    xyz = np.array([0,1])
+                                    CMI_temp.append(cme.estimate_cmi_knn(allin=ppdf_data, k=k, xyz=xyz, maxdim=ppdf_data.shape[0], T=ppdf_data.shape[1], norm=0,standardize=True))
+                            
+                                    # CMI_temp.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
+                                        # phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
                                 cmi[i, j] = np.mean(np.array(CMI_temp))
 
-                                ph_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
+                                # ph_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
+                                pa_data = np.vstack([phase_i, amp_j])
+                                xyz = np.array([0,1])
+                                ph_amp_MI[i, j] = cme.estimate_cmi_knn(allin=pa_data, k=k, xyz=xyz, maxdim=pa_data.shape[0], T=pa_data.shape[1], norm=0,standardize=True)
+
 
                                 CMI2 = []
                                 eta = np.int(scales[i] / 4)
                                 for tau in range(1, 7): # possible 1-31
                                     x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
-                                    CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
+                                    cond3_data = np.vstack([x,y,z])
+                                    CMI2.append(cme.estimate_cmi_knn(allin=cond3_data, k=k, xyz=xyz, maxdim=cond3_data.shape[0], T=cond3_data.shape[1], norm=0,standardize=True))
+                                    
+                                    # CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
                                 ph_amp_CMI[i, j] = np.mean(np.array(CMI2))
 
                         resq.put((coh, cmi, ph_amp_MI, ph_amp_CMI))
@@ -270,7 +297,7 @@ if COMPUTE:
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    surrs = sio.loadmat("Nino34-linear-20PC-L3-seasonal-surrs.mat")['N34s']
+                    surrs = sio.loadmat("Nino34-linear-10PCsel-L3-seasonal-surrs.mat")['N34s']
                     # surrs = sio.loadmat("10m-wind-20PCs-L3-model-surrs.mat")['ExA_mode']
                     # surrs = surrs[-1024:, :].copy()
 
@@ -313,7 +340,7 @@ if COMPUTE:
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
-                fname = ("Nino34-%s_CMImap4bins3Dcond%d-against-basicERMnondelay.bin" % (CMIP5model, num_ts))
+                fname = ("kNN--Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
                 # fname = ("PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
@@ -329,7 +356,7 @@ if COMPUTE:
 else:
     CMIP5models = ['linear-20PC-L3-seasonal']
     BINS = 4
-    PUB = False
+    PUB = True
     for CMIP5model in CMIP5models:
         # fname = CMIP5model + '.txt'
         # model = np.loadtxt('N34_CMIP5/' + fname)
@@ -337,7 +364,7 @@ else:
         if PUB:
             model_count = 1
         else:
-            model_count = 20
+            model_count = 1
         # CMIP5model = None
         scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
         overall_ph_ph = np.zeros((scales.shape[0], scales.shape[0]))
@@ -348,9 +375,9 @@ else:
         # model_count = ['34']
 
         for num_ts in range(model_count):
-            fname = ("bins/python-model/Python-Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+            # fname = ("bins/python-model/Python-Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
             # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
-            # fname = 'bins/Nino34-obs_CMImap4bins3Dcond-against-basicERM.bin'
+            fname = 'bins/DDEmodel-k50.0-tau:0.508-b:1.0-against500FT.bin'
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
@@ -393,12 +420,12 @@ else:
                 gs = gridspec.GridSpec(1, 2)
                 gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
                 axs = [gs[0,0], gs[0,1]]
-                # plot = [res_phase_cmi.T, res_phase_amp_CMI.T]
-                plot = [res_phase_coh.T, res_phase_amp_CMI.T]
-                # tits = ['PHASE-PHASE CAUSALITY', 'PHASE-AMP CAUSALITY']
-                tits = ['PHASE SYNCHRONIZATION', '']
-                # labs = ['PHASE', 'AMP']
-                labs = ['PHASE', '']
+                plot = [res_phase_cmi.T, res_phase_amp_CMI.T]
+                # plot = [res_phase_coh.T, res_phase_amp_CMI.T]
+                tits = ['PHASE-PHASE CAUSALITY', 'PHASE-AMP CAUSALITY']
+                # tits = ['PHASE SYNCHRONIZATION', '']
+                labs = ['PHASE', 'AMP']
+                # labs = ['PHASE', '']
                 for ax, cont, tit, lab in zip(axs, plot, tits, labs):
                     ax = plt.subplot(ax)
                     cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
@@ -414,7 +441,7 @@ else:
                     # plt.colorbar(cs)
                     ax.grid()
                     ax.set_ylabel("PERIOD %s [years]" % lab, size = 23)
-                plt.savefig('plots/pub2.eps', bbox_inches = "tight")
+                plt.savefig('DDE-cmi.eps', bbox_inches = "tight")
             else:
                 fig = plt.figure(figsize=(15,15))
                 gs = gridspec.GridSpec(2, 2)
