@@ -2,6 +2,7 @@
 *.bin
 *.png
 *.txt
+*.dat
 CMIP5_NINO34/
 N34_CMIP5/
 notebooks/

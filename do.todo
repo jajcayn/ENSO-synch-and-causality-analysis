@@ -1,17 +1,4 @@
-LINEAR REGRESSION MODEL:
- ✔ skus na uz hotovych CMI mapy - asi tam nebude nic @done (15-12-15 15:13)
- ✔ neodstranovat rocny cyklus - no anomalies pred EOF @done (16-01-14 22:18)
- ✔ kvadraticky model @done (16-02-22 14:47)
- ✘ nieco na styl PRO zaviest do modelu @cancelled (16-01-19 16:30)
- ☐ multiplicative noise instead of additive
- ✔ ostatne CMI maps pocitat na 100surr @done (16-01-14 22:18)
- ✔ vzdy rob spectrum, z-scores a CMI maps @done (16-01-14 22:18)
- ✔ rovnake initial conditions + iny sum @done (16-01-08 15:19)
- ✔ naintegruj ovela dlhsie casove rady ~ 60000bodov a skus analyzovat tie @done (16-02-22 14:47)
-
-
-PRO model:
- ☐ skusit sa pohrat noise vs. damping
-
-other:
- ✔ sprava o modeloch ku KONTAKT sprave  @done (16-01-04 14:57)
+PAPER:
+ ☐ spusti CMI analyzu na surrogatoch vs. ostatne surrogaty kvoli false positives
+ ☐ konceptualny model coupled Rossler 1:2 na synchronizaciu, skusit ich modelovat Sergey modelom a CMI analyzu na Rossler casove rady a tiez na jeho model, napis rovnice, sprav zakladnu analyzu CMI vs coupling oboma smermi, vyber coupling, ked uz budu zosynchronizovane tak fix coupling, MI phase phase synchro, modeluj - pozri ci tam je phase synchro 1:2
+ ☐ PRO damped model - knn CMI ci vidno 1:2 synchro (v rovniciach damped je l = l0*cos(w_a*t) kde w_a je annual amp cize by tam mala byt rovnocenna vec ako u Sergeya v modeli)

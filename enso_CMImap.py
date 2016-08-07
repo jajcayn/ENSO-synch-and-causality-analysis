@@ -81,7 +81,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
 
     if EMRmodel is not None:
         print("[%s] Loading EMR (%s) simulated syntethic ENSO time series..." % (str(datetime.now()), EMRmodel))
-        raw = sio.loadmat("Nino34-%s.mat" % (EMRmodel))['N34s']
+        # raw = sio.loadmat("Nino34-%s.mat" % (EMRmodel))['N34s']
+        raw = sio.loadmat("Nino34-linear-10PCsel-L3-seasonal-surrs.mat")['N34s']
         enso.data = raw[num_ts, -1332:] # same length as nino3.4 data
         # if '4k' in EMRmodel:
         #     enso.data = raw[-4096:, num_ts].copy()
@@ -194,34 +195,34 @@ if COMPUTE:
                         phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                         amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
-                        #phase_phase_coherence[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
+                        phase_phase_coherence[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
                         # kNN --- David
-                        pp_data = np.vstack([phase_i, phase_j])
-                        xyz = np.array([0,1])
-                        phase_phase_coherence[i, j] = cme.estimate_cmi_knn(allin=pp_data, k=k, xyz=xyz, maxdim=pp_data.shape[0], T=pp_data.shape[1], norm=0,standardize=True)
+                        # pp_data = np.vstack([phase_i, phase_j])
+                        # xyz = np.array([0,1])
+                        # phase_phase_coherence[i, j] = cme.estimate_cmi_knn(allin=pp_data, k=k, xyz=xyz, maxdim=pp_data.shape[0], T=pp_data.shape[1], norm=0,standardize=True)
 
                         # conditional mutual inf -- avg over lags 1 - 6 months
                         CMI = []
                         for tau in range(1, 7):
-                            ppdf_data = np.vstack([phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]),phase_j[:-tau]])
-                            xyz = np.array([0,1])
-                            CMI.append(cme.estimate_cmi_knn(allin=ppdf_data, k=k, xyz=xyz, maxdim=ppdf_data.shape[0], T=ppdf_data.shape[1], norm=0,standardize=True))
-                            # CMI.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
-                            #     phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
+                            # ppdf_data = np.vstack([phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]),phase_j[:-tau]])
+                            # xyz = np.array([0,1])
+                            # CMI.append(cme.estimate_cmi_knn(allin=ppdf_data, k=k, xyz=xyz, maxdim=ppdf_data.shape[0], T=ppdf_data.shape[1], norm=0,standardize=True))
+                            CMI.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
+                                phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
                         phase_phase_CMI[i, j] = np.mean(np.array(CMI))
 
-                        # phase_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
-                        pa_data = np.vstack([phase_i, amp_j])
-                        xyz = np.array([0,1])
-                        phase_amp_MI[i, j] = cme.estimate_cmi_knn(allin=pa_data, k=k, xyz=xyz, maxdim=pa_data.shape[0], T=pa_data.shape[1], norm=0,standardize=True)
+                        phase_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
+                        # pa_data = np.vstack([phase_i, amp_j])
+                        # xyz = np.array([0,1])
+                        # phase_amp_MI[i, j] = cme.estimate_cmi_knn(allin=pa_data, k=k, xyz=xyz, maxdim=pa_data.shape[0], T=pa_data.shape[1], norm=0,standardize=True)
 
                         CMI2 = []
                         eta = np.int(scales[i] / 4)
                         for tau in range(1, 7): # possible 1-31
                             x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
-                            cond3_data = np.vstack([x,y,z])
-                            CMI2.append(cme.estimate_cmi_knn(allin=cond3_data, k=k, xyz=xyz, maxdim=cond3_data.shape[0], T=cond3_data.shape[1], norm=0,standardize=True))
-                            # CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
+                            # cond3_data = np.vstack([x,y,z])
+                            # CMI2.append(cme.estimate_cmi_knn(allin=cond3_data, k=k, xyz=xyz, maxdim=cond3_data.shape[0], T=cond3_data.shape[1], norm=0,standardize=True))
+                            CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
                         phase_amp_condMI[i, j] = np.mean(np.array(CMI2))
 
                 print("[%s] Analysis on data done." % str(datetime.now()))
@@ -258,36 +259,36 @@ if COMPUTE:
                                 phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                                 amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
-                                # coh[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
-                                pp_data = np.vstack([phase_i, phase_j])
-                                xyz = np.array([0,1])
-                                coh[i, j] = cme.estimate_cmi_knn(allin=pp_data, k=k, xyz=xyz, maxdim=pp_data.shape[0], T=pp_data.shape[1], norm=0,standardize=True)
+                                coh[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
+                                # pp_data = np.vstack([phase_i, phase_j])
+                                # xyz = np.array([0,1])
+                                # coh[i, j] = cme.estimate_cmi_knn(allin=pp_data, k=k, xyz=xyz, maxdim=pp_data.shape[0], T=pp_data.shape[1], norm=0,standardize=True)
 
                                 # conditional mutual inf -- avg over lags 1 - 6 months
                                 CMI_temp = []
                                 for tau in range(1, 7):
-                                    ppdf_data = np.vstack([phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]),phase_j[:-tau]])
-                                    xyz = np.array([0,1])
-                                    CMI_temp.append(cme.estimate_cmi_knn(allin=ppdf_data, k=k, xyz=xyz, maxdim=ppdf_data.shape[0], T=ppdf_data.shape[1], norm=0,standardize=True))
+                                    # ppdf_data = np.vstack([phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]),phase_j[:-tau]])
+                                    # xyz = np.array([0,1])
+                                    # CMI_temp.append(cme.estimate_cmi_knn(allin=ppdf_data, k=k, xyz=xyz, maxdim=ppdf_data.shape[0], T=ppdf_data.shape[1], norm=0,standardize=True))
                             
-                                    # CMI_temp.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
-                                        # phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
+                                    CMI_temp.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
+                                        phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
                                 cmi[i, j] = np.mean(np.array(CMI_temp))
 
-                                # ph_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
-                                pa_data = np.vstack([phase_i, amp_j])
-                                xyz = np.array([0,1])
-                                ph_amp_MI[i, j] = cme.estimate_cmi_knn(allin=pa_data, k=k, xyz=xyz, maxdim=pa_data.shape[0], T=pa_data.shape[1], norm=0,standardize=True)
+                                ph_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
+                                # pa_data = np.vstack([phase_i, amp_j])
+                                # xyz = np.array([0,1])
+                                # ph_amp_MI[i, j] = cme.estimate_cmi_knn(allin=pa_data, k=k, xyz=xyz, maxdim=pa_data.shape[0], T=pa_data.shape[1], norm=0,standardize=True)
 
 
                                 CMI2 = []
                                 eta = np.int(scales[i] / 4)
                                 for tau in range(1, 7): # possible 1-31
                                     x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
-                                    cond3_data = np.vstack([x,y,z])
-                                    CMI2.append(cme.estimate_cmi_knn(allin=cond3_data, k=k, xyz=xyz, maxdim=cond3_data.shape[0], T=cond3_data.shape[1], norm=0,standardize=True))
+                                    # cond3_data = np.vstack([x,y,z])
+                                    # CMI2.append(cme.estimate_cmi_knn(allin=cond3_data, k=k, xyz=xyz, maxdim=cond3_data.shape[0], T=cond3_data.shape[1], norm=0,standardize=True))
                                     
-                                    # CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
+                                    CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
                                 ph_amp_CMI[i, j] = np.mean(np.array(CMI2))
 
                         resq.put((coh, cmi, ph_amp_MI, ph_amp_CMI))
@@ -310,7 +311,7 @@ if COMPUTE:
                     jobq = Queue()
                     resq = Queue()
                     for i in range(NUM_SURR):
-                        jobq.put(surrs[i, -1332:])
+                        jobq.put(surrs[100+i, -1332:])
                         # jobq.put(1)
                     for i in range(WRKRS):
                         jobq.put(None)
@@ -340,7 +341,7 @@ if COMPUTE:
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
-                fname = ("kNN--Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
+                fname = ("Nino34-%s_CMImap4bins3Dcond%d-FALSE-POSITIVES.bin" % (CMIP5model, num_ts))
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
                 # fname = ("PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
