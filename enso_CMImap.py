@@ -208,20 +208,20 @@ if COMPUTE:
                 # phase_amp_MI = np.zeros_like(phase_phase_coherence)
                 # phase_amp_condMI = np.zeros_like(phase_phase_coherence)
                 phase_phase_coherence_knn = np.zeros((scales.shape[0], scales.shape[0]))
-                phase_phase_CMI_knn = np.zeros_like(phase_phase_coherence)
-                phase_amp_MI_knn = np.zeros_like(phase_phase_coherence)
-                phase_amp_condMI_knn = np.zeros_like(phase_phase_coherence)
+                phase_phase_CMI_knn = np.zeros_like(phase_phase_coherence_knn)
+                phase_amp_MI_knn = np.zeros_like(phase_phase_coherence_knn)
+                phase_amp_condMI_knn = np.zeros_like(phase_phase_coherence_knn)
 
                 enso.center_data()
                 print enso.data.shape#, y.shape
 
-                for i in range(phase_phase_coherence.shape[0]):
+                for i in range(phase_phase_coherence_knn.shape[0]):
                     sc_i = scales[i] / fourier_factor
                     wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                     #wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                     phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                     
-                    for j in range(phase_phase_coherence.shape[1]):
+                    for j in range(phase_phase_coherence_knn.shape[1]):
                         sc_j = scales[j] / fourier_factor
                         wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                         # wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
@@ -287,18 +287,18 @@ if COMPUTE:
                         # ph_amp_MI = np.zeros_like(phase_phase_coherence)
                         # ph_amp_CMI = np.zeros_like(phase_phase_coherence)
                         coh_knn = np.zeros((sc.shape[0], sc.shape[0]))
-                        cmi_knn = np.zeros_like(phase_phase_coherence)
-                        ph_amp_MI_knn = np.zeros_like(phase_phase_coherence)
-                        ph_amp_CMI_knn = np.zeros_like(phase_phase_coherence)
+                        cmi_knn = np.zeros_like(phase_phase_coherence_knn)
+                        ph_amp_MI_knn = np.zeros_like(phase_phase_coherence_knn)
+                        ph_amp_CMI_knn = np.zeros_like(phase_phase_coherence_knn)
 
                         sg.center_surr()
 
-                        for i in range(coh.shape[0]):
+                        for i in range(coh_knn.shape[0]):
                             sc_i = sc[i] / fourier_factor
                             wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                             phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                             
-                            for j in range(coh.shape[1]):
+                            for j in range(coh_knn.shape[1]):
                                 sc_j = sc[j] / fourier_factor
                                 wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                                 # wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
