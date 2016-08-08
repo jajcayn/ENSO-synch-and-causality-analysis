@@ -260,11 +260,11 @@ if COMPUTE:
                         CMI2_knn = []
                         eta = np.int(scales[i] / 4)
                         for tau in range(1, 7): # possible 1-31
-                            x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
+                            x, yts, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
                             # cond3_data = np.vstack([x,y,z])
                             # CMI2.append(cme.estimate_cmi_knn(allin=cond3_data, k=k, xyz=xyz, maxdim=cond3_data.shape[0], T=cond3_data.shape[1], norm=0,standardize=True))
-                            CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
-                            CMI2_knn.append(MI.knn_cond_mutual_information(x, y, z, k = 64, dualtree = True))
+                            CMI2.append(MI.cond_mutual_information(x, yts, z, algorithm = 'GCM', bins = BINS))
+                            CMI2_knn.append(MI.knn_cond_mutual_information(x, yts, z, k = 64, dualtree = True))
                         phase_amp_condMI[i, j] = np.mean(np.array(CMI2))
                         phase_amp_condMI_knn[i, j] = np.mean(np.array(CMI2_knn))
 
