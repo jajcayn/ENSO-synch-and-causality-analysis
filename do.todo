@@ -1,4 +1,4 @@
 PAPER:
- ☐ spusti CMI analyzu na surrogatoch vs. ostatne surrogaty kvoli false positives
+ ✔ spusti CMI analyzu na surrogatoch vs. ostatne surrogaty kvoli false positives @done (16-08-07 13:06)
  ☐ konceptualny model coupled Rossler 1:2 na synchronizaciu, skusit ich modelovat Sergey modelom a CMI analyzu na Rossler casove rady a tiez na jeho model, napis rovnice, sprav zakladnu analyzu CMI vs coupling oboma smermi, vyber coupling, ked uz budu zosynchronizovane tak fix coupling, MI phase phase synchro, modeluj - pozri ci tam je phase synchro 1:2
  ☐ PRO damped model - knn CMI ci vidno 1:2 synchro (v rovniciach damped je l = l0*cos(w_a*t) kde w_a je annual amp cize by tam mala byt rovnocenna vec ako u Sergeya v modeli)

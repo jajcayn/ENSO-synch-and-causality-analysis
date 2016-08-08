@@ -14,6 +14,27 @@ COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = False
 
+def read_rossler(fname):
+    import csv
+    r = {}
+    f = open(fname, 'r')
+    reader = csv.reader(f, lineterminator = "\n")
+    eps = None
+    for row in reader:
+        if 'eps1' in row[0]:
+            if eps is not None:
+                r[eps] = np.array(r[eps])
+            eps = float(row[0][8:])
+            r[eps] = []
+        if not "#" in row[0]:
+            n = row[0].split()
+            r[eps].append([float(n[0]), float(n[1])])
+    r[eps] = np.array(r[eps])
+    f.close()
+
+    return r
+
+
 if COMPUTE:
     import platform
     if platform.system() == "Linux":
@@ -35,9 +56,12 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     # load enso SSTs
     print("[%s] Loading monthly ENSO SSTs..." % str(datetime.now()))
     # enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
-    # enso = DataField()
+    enso = DataField()
 
-    enso = load_enso_index("nino34raw.txt", '3.4', date(1900, 1, 1), date(2011, 1, 1))
+    # enso = load_enso_index("nino34raw.txt", '3.4', date(1900, 1, 1), date(2011, 1, 1))
+    fname = "conceptualRossler1:2monthlysampling_100eps0-0.25.dat"
+    r = read_rossler(fname)
+    x, y = r[0.202][20000:52768, 0], r[0.202][20000:52768, 1] # x is biennal, y is annual
     # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")
     # enso.data = exa.copy()
     # enso.data = enso_raw[:, 1]
@@ -50,6 +74,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     #     enso.data = np.zeros((16384,))
     # elif '32k' in EMRmodel:
     #     enso.data = np.zeros((32768,))
+    enso.data = x.copy()
+    enso.create_time_array(date(1900, 1, 1), sampling = 'm')
 
     # enso.select_date(date(1884,1,1), date(2014,1,1))
 
@@ -100,7 +126,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
         # elif num_ts%3 == 2:
         #     dat = enso.get_date_from_ndx(7354)
         
-    enso.get_data_of_precise_length(length = 1332, end_date = enso.get_date_from_ndx(-1), copy = True)
+    # enso.get_data_of_precise_length(length = 1332, end_date = enso.get_date_from_ndx(-1), copy = True)
 
 
     if NUM_SURR > 0:
@@ -120,7 +146,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     # enso.get_data_of_precise_length(length = 1024, end_date = date(2014, 1, 1), COPY = True)
     print("[%s] Data loaded with shape %s" % (str(datetime.now()), enso.data.shape))
 
-    return enso, enso_sg, a#, pcs
+    return enso, enso_sg, a, y
 
 def phase_diff(ph1, ph2):
     ph = ph1 - ph2
@@ -128,7 +154,7 @@ def phase_diff(ph1, ph2):
 
     return ph
 
-WVLT_SPAN = [5,93] # unit is month
+WVLT_SPAN = [5,36] # unit is month
 NUM_SURR = 100
 WRKRS = 20
 # BINS = 4
@@ -149,7 +175,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 20
+            model_count = 1
             # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")[-1332:]
             # exa = np.loadtxt("PC1-wind-comb-mode-20CR-1900-2010-stand.txt")[-1332:]
             # CMIP5model = None
@@ -160,7 +186,7 @@ if COMPUTE:
                 print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
                     num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
-                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = False, EMRmodel = CMIP5model, DDEmodel = None)
+                enso, enso_sg, seasonality, y = load_enso_SSTs(num_ts, PROmodel = False, EMRmodel = None, DDEmodel = None)
                 #exa = sio.loadmat('Nino34-SST-x-wind-40PCsel.mat')['wind_sim'][:, 1, num_ts]
                 # if num_ts == 0:
                 #     exa = enso.data.copy() # 1 -> 1
@@ -179,6 +205,10 @@ if COMPUTE:
                 phase_phase_CMI = np.zeros_like(phase_phase_coherence)
                 phase_amp_MI = np.zeros_like(phase_phase_coherence)
                 phase_amp_condMI = np.zeros_like(phase_phase_coherence)
+                phase_phase_coherence_knn = np.zeros((scales.shape[0], scales.shape[0]))
+                phase_phase_CMI_knn = np.zeros_like(phase_phase_coherence)
+                phase_amp_MI_knn = np.zeros_like(phase_phase_coherence)
+                phase_amp_condMI_knn = np.zeros_like(phase_phase_coherence)
 
                 enso.center_data()
 
@@ -190,12 +220,13 @@ if COMPUTE:
                     
                     for j in range(phase_phase_coherence.shape[1]):
                         sc_j = scales[j] / fourier_factor
-                        wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                        wave, _, _, _ = wvlt.continous_wavelet(y, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                         # wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                         phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                         amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
                         phase_phase_coherence[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
+                        phase_phase_coherence_knn[i, j] = MI.knn_mutual_information(phase_i, phase_j, k = 64, dualtree = True)
                         # kNN --- David
                         # pp_data = np.vstack([phase_i, phase_j])
                         # xyz = np.array([0,1])
@@ -203,27 +234,35 @@ if COMPUTE:
 
                         # conditional mutual inf -- avg over lags 1 - 6 months
                         CMI = []
+                        CMI_knn = []
                         for tau in range(1, 7):
                             # ppdf_data = np.vstack([phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]),phase_j[:-tau]])
                             # xyz = np.array([0,1])
                             # CMI.append(cme.estimate_cmi_knn(allin=ppdf_data, k=k, xyz=xyz, maxdim=ppdf_data.shape[0], T=ppdf_data.shape[1], norm=0,standardize=True))
                             CMI.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
                                 phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
+                            CMI_knn.append(MI.knn_cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
+                                phase_j[:-tau], k = 64, dualtree = True))
                         phase_phase_CMI[i, j] = np.mean(np.array(CMI))
+                        phase_phase_CMI_knn[i, j] = np.mean(np.array(CMI_knn))
 
                         phase_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
+                        phase_amp_MI_knn[i, j] = MI.knn_mutual_information(phase_i, amp_j, k = 64, dualtree = True)
                         # pa_data = np.vstack([phase_i, amp_j])
                         # xyz = np.array([0,1])
                         # phase_amp_MI[i, j] = cme.estimate_cmi_knn(allin=pa_data, k=k, xyz=xyz, maxdim=pa_data.shape[0], T=pa_data.shape[1], norm=0,standardize=True)
 
                         CMI2 = []
+                        CMI2_knn = []
                         eta = np.int(scales[i] / 4)
                         for tau in range(1, 7): # possible 1-31
                             x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
                             # cond3_data = np.vstack([x,y,z])
                             # CMI2.append(cme.estimate_cmi_knn(allin=cond3_data, k=k, xyz=xyz, maxdim=cond3_data.shape[0], T=cond3_data.shape[1], norm=0,standardize=True))
                             CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
+                            CMI2_knn.append(MI.knn_cond_mutual_information(x, y, z, k = 64, dualtree = True))
                         phase_amp_condMI[i, j] = np.mean(np.array(CMI2))
+                        phase_amp_condMI_knn[i, j] = np.mean(np.array(CMI2knn))
 
                 print("[%s] Analysis on data done." % str(datetime.now()))
 
@@ -235,15 +274,19 @@ if COMPUTE:
                         s = jobq.get()
                         if s is None:
                             break
-                        # sg.construct_fourier_surrogates_spatial()
-                        # sg.add_seasonality(mean, var, None)
+                        sg.construct_fourier_surrogates_spatial()
+                        sg.add_seasonality(mean, var, None)
 
-                        sg.surr_data = s.copy()
+                        # sg.surr_data = s.copy()
 
                         coh = np.zeros((sc.shape[0], sc.shape[0]))
                         cmi = np.zeros_like(phase_phase_coherence)
                         ph_amp_MI = np.zeros_like(phase_phase_coherence)
                         ph_amp_CMI = np.zeros_like(phase_phase_coherence)
+                        coh_knn = np.zeros((sc.shape[0], sc.shape[0]))
+                        cmi_knn = np.zeros_like(phase_phase_coherence)
+                        ph_amp_MI_knn = np.zeros_like(phase_phase_coherence)
+                        ph_amp_CMI_knn = np.zeros_like(phase_phase_coherence)
 
                         sg.center_surr()
 
@@ -254,18 +297,20 @@ if COMPUTE:
                             
                             for j in range(coh.shape[1]):
                                 sc_j = sc[j] / fourier_factor
-                                wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
+                                wave, _, _, _ = wvlt.continous_wavelet(y, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                                 # wave, _, _, _ = wvlt.continous_wavelet(exa, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                                 phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                                 amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
                                 coh[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
+                                coh_knn[i, j] = MI.knn_mutual_information(phase_i, phase_j, k = 64, dualtree = True)
                                 # pp_data = np.vstack([phase_i, phase_j])
                                 # xyz = np.array([0,1])
                                 # coh[i, j] = cme.estimate_cmi_knn(allin=pp_data, k=k, xyz=xyz, maxdim=pp_data.shape[0], T=pp_data.shape[1], norm=0,standardize=True)
 
                                 # conditional mutual inf -- avg over lags 1 - 6 months
                                 CMI_temp = []
+                                CMI_temp_knn = []
                                 for tau in range(1, 7):
                                     # ppdf_data = np.vstack([phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]),phase_j[:-tau]])
                                     # xyz = np.array([0,1])
@@ -273,15 +318,20 @@ if COMPUTE:
                             
                                     CMI_temp.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
                                         phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
+                                    CMI_temp_knn.append(MI.knn_cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
+                                        phase_j[:-tau], k = 64, dualtree = True))
                                 cmi[i, j] = np.mean(np.array(CMI_temp))
+                                cmi_knn[i, j] = np.mean(np.array(CMI_temp_knn))
 
                                 ph_amp_MI[i, j] = MI.mutual_information(phase_i, amp_j, algorithm = 'EQQ2', bins = BINS)
+                                ph_amp_MI_knn[i, j] = MI.knn_mutual_information(phase_i, amp_j, k = 64, dualtree = True)
                                 # pa_data = np.vstack([phase_i, amp_j])
                                 # xyz = np.array([0,1])
                                 # ph_amp_MI[i, j] = cme.estimate_cmi_knn(allin=pa_data, k=k, xyz=xyz, maxdim=pa_data.shape[0], T=pa_data.shape[1], norm=0,standardize=True)
 
 
                                 CMI2 = []
+                                CMI2_knn = []
                                 eta = np.int(scales[i] / 4)
                                 for tau in range(1, 7): # possible 1-31
                                     x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
@@ -289,16 +339,17 @@ if COMPUTE:
                                     # CMI2.append(cme.estimate_cmi_knn(allin=cond3_data, k=k, xyz=xyz, maxdim=cond3_data.shape[0], T=cond3_data.shape[1], norm=0,standardize=True))
                                     
                                     CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
+                                    CMI2_knn.append(MI.knn_cond_mutual_information(x, y, z, k = 64, dualtree = True))
                                 ph_amp_CMI[i, j] = np.mean(np.array(CMI2))
 
-                        resq.put((coh, cmi, ph_amp_MI, ph_amp_CMI))
+                        resq.put((coh, cmi, ph_amp_MI, ph_amp_CMI, coh_knn, cmi_knn, ph_amp_MI_knn, ph_amp_CMI_knn))
 
 
                 ## SURROGATES
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    surrs = sio.loadmat("Nino34-linear-10PCsel-L3-seasonal-surrs.mat")['N34s']
+                    # surrs = sio.loadmat("Nino34-linear-10PCsel-L3-seasonal-surrs.mat")['N34s']
                     # surrs = sio.loadmat("10m-wind-20PCs-L3-model-surrs.mat")['ExA_mode']
                     # surrs = surrs[-1024:, :].copy()
 
@@ -308,11 +359,15 @@ if COMPUTE:
                     surrCMI = np.zeros_like(surrCoherence)
                     surrPhaseAmp = np.zeros_like(surrCoherence)
                     surrPhaseAmpCMI = np.zeros_like(surrCoherence)
+                    surrCoherence_knn = np.zeros(([NUM_SURR] + list(phase_phase_coherence.shape)))
+                    surrCMI_knn = np.zeros_like(surrCoherence)
+                    surrPhaseAmp_knn = np.zeros_like(surrCoherence)
+                    surrPhaseAmpCMI_knn = np.zeros_like(surrCoherence)
                     jobq = Queue()
                     resq = Queue()
                     for i in range(NUM_SURR):
-                        jobq.put(surrs[100+i, -1332:])
-                        # jobq.put(1)
+                        # jobq.put(surrs[100+i, -1332:])
+                        jobq.put(1)
                     for i in range(WRKRS):
                         jobq.put(None)
 
@@ -321,11 +376,15 @@ if COMPUTE:
                         w.start()
 
                     while surr_completed < NUM_SURR:
-                        coh, cmi, phAmp, phAmpCMI = resq.get()
+                        coh, cmi, phAmp, phAmpCMI, coh_knn, cmi_knn, phAmp_knn, phAmpCMI_knn = resq.get()
                         surrCoherence[surr_completed, :, :] = coh
                         surrCMI[surr_completed, :, :] = cmi
                         surrPhaseAmp[surr_completed, :, :] = phAmp
                         surrPhaseAmpCMI[surr_completed, :, :] = phAmpCMI
+                        surrCoherence_knn[surr_completed, :, :] = coh_knn
+                        surrCMI_knn[surr_completed, :, :] = cmi_knn
+                        surrPhaseAmp_knn[surr_completed, :, :] = phAmp_knn
+                        surrPhaseAmpCMI_knn[surr_completed, :, :] = phAmpCMI_knn
                         surr_completed += 1
 
                         if surr_completed % 20 == 0:
@@ -341,14 +400,18 @@ if COMPUTE:
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
-                fname = ("Nino34-%s_CMImap4bins3Dcond%d-FALSE-POSITIVES.bin" % (CMIP5model, num_ts))
+                # fname = ("Nino34-%s_CMImap4bins3Dcond%d-FALSE-POSITIVES.bin" % (CMIP5model, num_ts))
+                fname = ("conceptualRossler-1:2-monthlyEQQ-and-kNN.bin")
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
                 # fname = ("PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
                 with open(fname, 'wb') as f:
                     cPickle.dump({'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
                         'phase x phase surrs' : surrCoherence, 'phase CMI surrs' : surrCMI, 'phase x amp data' : phase_amp_MI,
-                        'phase amp CMI data' : phase_amp_condMI, 'phase x amp surrs' : surrPhaseAmp, 'phase amp CMI surrs' : surrPhaseAmpCMI}, 
+                        'phase amp CMI data' : phase_amp_condMI, 'phase x amp surrs' : surrPhaseAmp, 'phase amp CMI surrs' : surrPhaseAmpCMI, 
+                        'phase x phase data knn' : phase_phase_coherence_knn, 'phase CMI data knn' : phase_phase_CMI_knn, 
+                        'phase x phase surrs knn' : surrCoherence_knn, 'phase CMI surrs knn' : surrCMI_knn, 'phase x amp data knn' : phase_amp_MI_knn,
+                        'phase amp CMI data knn' : phase_amp_condMI_knn, 'phase x amp surrs knn' : surrPhaseAmp_knn, 'phase amp CMI surrs knn' : surrPhaseAmpCMI_knn}, 
                         f, protocol = cPickle.HIGHEST_PROTOCOL)
         print("[%s] All models done." % str(datetime.now()))
 
