@@ -39,8 +39,7 @@ if COMPUTE:
     import platform
     if platform.system() == "Linux":
         sys.path.append('/home/nikola/Work/phd/multi-scale')
-        sys.path.append('/home/nikolaj/Work/phd/multi-scale')
-        sys.path.append('/home/hartman/Work/Projects/cmi-analysis')
+        # sys.path.append('/home/hartman/Work/Projects/cmi-analysis')
     elif platform.system() == "Darwin":
         sys.path.append('/Users/nikola/work-ui/multi-scale')
 
