@@ -48,7 +48,7 @@ if COMPUTE:
     from src.data_class import DataField, load_enso_index
     from src.surrogates import SurrogateField
     from multiprocessing import Process, Queue
-    import cmi_estimation as cme
+    # import cmi_estimation as cme
 
 
 def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = None):
