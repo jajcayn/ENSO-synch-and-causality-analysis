@@ -128,7 +128,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
         # elif num_ts%3 == 2:
         #     dat = enso.get_date_from_ndx(7354)
         
-    enso.get_data_of_precise_length(length = 1332, end_date = enso.get_date_from_ndx(-1), copy = True)
+    enso.get_data_of_precise_length(length = 1332, end_date = enso.get_date_from_ndx(-1), apply_to_data = True)
 
 
     if NUM_SURR > 0:
