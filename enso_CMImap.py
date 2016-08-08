@@ -62,6 +62,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     fname = "conceptualRossler1:2monthlysampling_100eps0-0.25.dat"
     r = read_rossler(fname)
     x, y = r[0.202][20000:52768, 0], r[0.202][20000:52768, 1] # x is biennal, y is annual
+    print("rossler data read")
     # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")
     # enso.data = exa.copy()
     # enso.data = enso_raw[:, 1]
@@ -76,6 +77,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     #     enso.data = np.zeros((32768,))
     enso.data = x.copy()
     enso.create_time_array(date(1900, 1, 1), sampling = 'm')
+    print enso.data.shape
+    print enso.get_date_from_ndx(0), enso.get_date_from_ndx(-1)
 
     # enso.select_date(date(1884,1,1), date(2014,1,1))
 
