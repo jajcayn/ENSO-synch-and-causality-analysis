@@ -201,7 +201,7 @@ if COMPUTE:
                 ## DATA
                 #prepare result matrices
                 k0 = 6. # wavenumber of Morlet wavelet used in analysis
-                y = 12 # year in months
+                # y = 12 # year in months
                 fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + np.power(k0,2)))
                 scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
                 phase_phase_coherence = np.zeros((scales.shape[0], scales.shape[0]))
@@ -214,6 +214,7 @@ if COMPUTE:
                 phase_amp_condMI_knn = np.zeros_like(phase_phase_coherence)
 
                 enso.center_data()
+                print enso.data.shape, y.shape
 
                 for i in range(phase_phase_coherence.shape[0]):
                     sc_i = scales[i] / fourier_factor
