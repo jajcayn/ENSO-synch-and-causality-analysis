@@ -266,7 +266,7 @@ if COMPUTE:
                             CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
                             CMI2_knn.append(MI.knn_cond_mutual_information(x, y, z, k = 64, dualtree = True))
                         phase_amp_condMI[i, j] = np.mean(np.array(CMI2))
-                        phase_amp_condMI_knn[i, j] = np.mean(np.array(CMI2knn))
+                        phase_amp_condMI_knn[i, j] = np.mean(np.array(CMI2_knn))
 
                 print("[%s] Analysis on data done." % str(datetime.now()))
 
@@ -345,6 +345,7 @@ if COMPUTE:
                                     CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
                                     CMI2_knn.append(MI.knn_cond_mutual_information(x, y, z, k = 64, dualtree = True))
                                 ph_amp_CMI[i, j] = np.mean(np.array(CMI2))
+                                ph_amp_CMI_knn[i, j] = np.mean(np.array(CMI2_knn))
 
                         resq.put((coh, cmi, ph_amp_MI, ph_amp_CMI, coh_knn, cmi_knn, ph_amp_MI_knn, ph_amp_CMI_knn))
 
