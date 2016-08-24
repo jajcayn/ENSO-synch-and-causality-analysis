@@ -128,7 +128,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
         # elif num_ts%3 == 2:
         #     dat = enso.get_date_from_ndx(7354)
         
-    enso.get_data_of_precise_length(length = 1332, end_date = enso.get_date_from_ndx(-1), apply_to_data = True)
+    enso.get_data_of_precise_length(length = 1200, end_date = enso.get_date_from_ndx(-1), apply_to_data = True)
 
 
     if NUM_SURR > 0:
@@ -177,7 +177,7 @@ if COMPUTE:
             # fname = CMIP5model + '.txt'
             # model = np.loadtxt('N34_CMIP5/' + fname)
             # model_count = model.shape[1]
-            model_count = 20
+            model_count = 1
             # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")[-1332:]
             # exa = np.loadtxt("PC1-wind-comb-mode-20CR-1900-2010-stand.txt")[-1332:]
             # CMIP5model = None
@@ -188,7 +188,7 @@ if COMPUTE:
                 print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
                     num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
-                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = True, EMRmodel = None, DDEmodel = None)
+                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = False, EMRmodel = None, DDEmodel = None)
                 #exa = sio.loadmat('Nino34-SST-x-wind-40PCsel.mat')['wind_sim'][:, 1, num_ts]
                 # if num_ts == 0:
                 #     exa = enso.data.copy() # 1 -> 1
@@ -280,7 +280,7 @@ if COMPUTE:
                         sg.construct_fourier_surrogates_spatial()
                         sg.add_seasonality(mean, var, None)
 
-                        # sg.surr_data = s.copy()
+                        sg.surr_data = s.copy()
 
                         # coh = np.zeros((sc.shape[0], sc.shape[0]))
                         # cmi = np.zeros_like(phase_phase_coherence)
@@ -353,7 +353,7 @@ if COMPUTE:
                 if NUM_SURR > 0:
                     print("[%s] Analysing %d FT surrogates using %d workers..." % (str(datetime.now()), NUM_SURR, WRKRS))
 
-                    # surrs = sio.loadmat("Nino34-linear-10PCsel-L3-seasonal-surrs.mat")['N34s']
+                    surrs = sio.loadmat("DimaKon-Nino34-ERM-linear-SSTA.mat")['sstn']
                     # surrs = sio.loadmat("10m-wind-20PCs-L3-model-surrs.mat")['ExA_mode']
                     # surrs = surrs[-1024:, :].copy()
 
@@ -370,8 +370,8 @@ if COMPUTE:
                     jobq = Queue()
                     resq = Queue()
                     for i in range(NUM_SURR):
-                        # jobq.put(surrs[100+i, -1332:])
-                        jobq.put(1)
+                        jobq.put(surrs[:, i])
+                        # jobq.put(1)
                     for i in range(WRKRS):
                         jobq.put(None)
 
@@ -404,10 +404,10 @@ if COMPUTE:
                 if use_PRO_model:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
-                # fname = ("Nino34-%s_CMImap4bins3Dcond%d-FALSE-POSITIVES.bin" % (CMIP5model, num_ts))
+                fname = ("kNN-Nino34-obs_CMImap4bins3Dcond-vs-Dima.bin" % (CMIP5model, num_ts))
                 # fname = ("conceptualRossler-1:2-monthlyEQQ-and-kNN.bin")
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
-                fname = ("kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
+                # fname = ("kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
                 with open(fname, 'wb') as f:
                     cPickle.dump({#'phase x phase data' : phase_phase_coherence, 'phase CMI data' : phase_phase_CMI, 
@@ -424,7 +424,7 @@ if COMPUTE:
 else:
     CMIP5models = ['linear-20PC-L3-seasonal']
     BINS = 4
-    PUB = True
+    PUB = False
     for CMIP5model in CMIP5models:
         # fname = CMIP5model + '.txt'
         # model = np.loadtxt('N34_CMIP5/' + fname)
@@ -445,20 +445,20 @@ else:
         for num_ts in range(model_count):
             # fname = ("bins/python-model/Python-Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
             # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
-            fname = 'bins/DDEmodel-k50.0-tau:0.508-b:1.0-against500FT.bin'
+            fname = 'bins/conceptualRossler-1:2-monthlyEQQ-and-kNN.bin'
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
                 result = cPickle.load(f)
 
-            phase_phase_coherence = result['phase x phase data']
-            phase_phase_CMI = result['phase CMI data']
-            surrCoherence = result['phase x phase surrs'][CUT, ...]
-            surrCMI = result['phase CMI surrs'][CUT, ...]
-            phase_amp_MI = result['phase x amp data']
-            phase_amp_condMI = result['phase amp CMI data']
-            surrPhaseAmp = result['phase x amp surrs'][CUT, ...]
-            surrPhaseAmpCMI = result['phase amp CMI surrs'][CUT, ...]
+            phase_phase_coherence = result['phase x phase data knn']
+            phase_phase_CMI = result['phase CMI data knn']
+            surrCoherence = result['phase x phase surrs knn'][CUT, ...]
+            surrCMI = result['phase CMI surrs knn'][CUT, ...]
+            phase_amp_MI = result['phase x amp data knn']
+            phase_amp_condMI = result['phase amp CMI data knn']
+            surrPhaseAmp = result['phase x amp surrs knn'][CUT, ...]
+            surrPhaseAmpCMI = result['phase amp CMI surrs knn'][CUT, ...]
 
             print "loaded"
 
@@ -529,7 +529,7 @@ else:
                     ax.yaxis.set_major_locator(MultipleLocator(12))
                     ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
                     ax.yaxis.set_minor_locator(MultipleLocator(6))
-                    ax.set_xlabel("ExA period [years]", size = 20)
+                    ax.set_xlabel("Nino3.4 period [years]", size = 20)
                     # plt.colorbar(cs)
                     ax.grid()
                     if i % 2 == 0:
@@ -539,10 +539,10 @@ else:
                         pass
                     i += 1
 
-                plt.savefig('plots/PNino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
+                # plt.savefig('plots/PNino34-%s-CMImap4bin%d-against-basicERM.png' % (CMIP5model, num_ts))
                 # plt.savefig("plots/DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.png" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
-                # plt.savefig('plots/SST-PC4-vs-PC1_CMImap4bins3Dcond-against-basicERM.png')
+                plt.savefig('plots/conceptualRossler-1:2-monthlyKNN.png')
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
