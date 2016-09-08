@@ -60,8 +60,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     # enso = load_enso_index("nino34raw.txt", '3.4', date(1900, 1, 1), date(2011, 1, 1))
     fname = "conceptualRossler1:2monthlysampling_100eps0-0.25.dat"
     r = read_rossler(fname)
-    # x, y = r[0.0707][20000:52768, 0], r[0.0707][20000:52768, 1] # x is biennal, y is annual
-    x, y = r[0.0707][20000:21024, 0], r[0.0707][20000:21024, 1]
+    x, y = r[0.0707][20000:52768, 0], r[0.0707][20000:52768, 1] # x is biennal, y is annual
+    # x, y = r[0.0707][20000:21024, 0], r[0.0707][20000:21024, 1]
     print("rossler data read")
     # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")
     # enso.data = exa.copy()
@@ -157,7 +157,7 @@ def phase_diff(ph1, ph2):
 
     return ph
 
-WVLT_SPAN = [5,7] # unit is month 96
+WVLT_SPAN = [5,36] # unit is month 96
 NUM_SURR = 100
 WRKRS = 20
 # BINS = 4
