@@ -60,7 +60,8 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     # enso = load_enso_index("nino34raw.txt", '3.4', date(1900, 1, 1), date(2011, 1, 1))
     fname = "conceptualRossler1:2monthlysampling_100eps0-0.25.dat"
     r = read_rossler(fname)
-    x, y = r[0.0707][20000:52768, 0], r[0.0707][20000:52768, 1] # x is biennal, y is annual
+    # x, y = r[0.0707][20000:52768, 0], r[0.0707][20000:52768, 1] # x is biennal, y is annual
+    x, y = r[0.0707][20000:21024, 0], r[0.0707][20000:21024, 1]
     print("rossler data read")
     # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")
     # enso.data = exa.copy()
@@ -156,7 +157,7 @@ def phase_diff(ph1, ph2):
 
     return ph
 
-WVLT_SPAN = [5,36] # unit is month 96
+WVLT_SPAN = [5,7] # unit is month 96
 NUM_SURR = 100
 WRKRS = 20
 # BINS = 4
@@ -213,7 +214,7 @@ if COMPUTE:
                 phase_amp_condMI_knn = np.zeros_like(phase_phase_coherence_knn)
 
                 enso.center_data()
-                print enso.data.shape#, y.shape
+                print enso.data.shape, y.shape
 
                 for i in range(phase_phase_coherence_knn.shape[0]):
                     sc_i = scales[i] / fourier_factor
@@ -337,12 +338,12 @@ if COMPUTE:
                                 CMI2_knn = []
                                 eta = np.int(scales[i] / 4)
                                 for tau in range(1, 7): # possible 1-31
-                                    x, y, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
+                                    x, yts, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
                                     # cond3_data = np.vstack([x,y,z])
                                     # CMI2.append(cme.estimate_cmi_knn(allin=cond3_data, k=k, xyz=xyz, maxdim=cond3_data.shape[0], T=cond3_data.shape[1], norm=0,standardize=True))
                                     
-                                    CMI2.append(MI.cond_mutual_information(x, y, z, algorithm = 'GCM', bins = BINS))
-                                    CMI2_knn.append(MI.knn_cond_mutual_information(x, y, z, k = 64, dualtree = True))
+                                    CMI2.append(MI.cond_mutual_information(x, yts, z, algorithm = 'GCM', bins = BINS))
+                                    CMI2_knn.append(MI.knn_cond_mutual_information(x, yts, z, k = 64, dualtree = True))
                                 ph_amp_CMI[i, j] = np.mean(np.array(CMI2))
                                 ph_amp_CMI_knn[i, j] = np.mean(np.array(CMI2_knn))
 
