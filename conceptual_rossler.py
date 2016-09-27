@@ -3,6 +3,9 @@ import csv
 import sys
 sys.path.append("/Users/nikola/work-ui/multi-scale")
 import src.mutual_information as MI
+import src.wavelet_analysis as wvlt
+from src.surrogates import get_single_FT_surrogate
+import matplotlib.pyplot as plt
 
 
 def read_rossler(fname):
@@ -27,14 +30,81 @@ def read_rossler(fname):
 
 
 fname = "conceptualRossler1:2monthlysampling_100eps0-0.25.dat"
-r = read_rossler(fname)
-x, y = r[0.202][:, 0], r[0.202][:, 1]
+# r = read_rossler(fname)
+# print np.sort(r.keys())
+# x, y = r[0.2374][:, 0], r[0.2374][:, 1]
+# np.savetxt("temp.txt", r[0.2374][14276:18372, :], fmt = "%.8f")
+a = np.loadtxt("temp.txt")
+# # print a.shape
+xts, yts = a[:2048, 0], a[:2048, 1]
 
-import matplotlib.pyplot as plt
-plt.plot(x[100:200], label = "x")
-plt.plot(y[100:200], label = "y")
-plt.legend()
-plt.show()
+# wave, _, _, _ = wvlt.continous_wavelet(xts, 1, True, wvlt.morlet, dj = 0, s0 = 24, j1 = 0, k0 = 6.)
+# phase_x = np.arctan2(np.imag(wave), np.real(wave))[0, :]
+
+# wave, _, _, _ = wvlt.continous_wavelet(yts, 1, True, wvlt.morlet, dj = 0, s0 = 12, j1 = 0, k0 = 6.)
+# phase_y = np.arctan2(np.imag(wave), np.real(wave))[0, :]
+
+xts -= np.mean(xts)
+yts -= np.mean(yts)
+xts /= np.std(xts)
+yts /= np.std(yts)
+
+import scipy.signal as ss
+
+maxima = ss.argrelextrema(yts[:200], np.greater)[0][1::2]
+
+print maxima
+
+plt.plot(xts[:200], color = "#109EB2", linewidth = 2.3)
+plt.plot(yts[:200] - 3.5, color = "#E67373", linewidth = 2.3)
+# plt.plot(maxima, yts[maxima] - 3.5, 'o')
+for i in range(maxima.shape[0]):
+    plt.axvline(maxima[i], 0, 1, color = 'grey', linewidth = 1.2, linestyle = '-.')
+
+# plt.xlim([-20, 220])
+plt.savefig("phase-synch-ex.eps")
+
+
+
+
+# cmi1knn = []
+# for tau in range(1,7):
+    
+#     x, y, z = MI.get_time_series_condition([xts, yts], tau = tau, reversed = False, dim_of_condition = 3, eta = 3)
+#     cmi1knn.append(MI.knn_cond_mutual_information(x, y, z, k = 64, dualtree = True))
+
+# cmi = np.mean(cmi1knn)
+# print cmi
+
+# a = np.loadtxt("temp1.txt")
+
+# t = np.greater(cmi, a)
+# print np.sum(t)/500.
+
+# import matplotlib.pyplot as plt
+# plt.hist(a, bins = 50, fc = "grey", ec = 'grey')
+# plt.axvline(cmi, 0, 1, color = "red", linewidth = 2)
+# plt.savefig("surrogates.eps", bbox_inches = 'tight')
+
+# surrs = []
+# for num in range(500):
+#     print num
+#     x_t = get_single_FT_surrogate(xts)
+#     cmi_temp = []
+#     for tau in range(1,7):
+#         x, y, z = MI.get_time_series_condition([x_t, yts], tau = tau, reversed = False, dim_of_condition = 3, eta = 3)
+#         cmi_temp.append(MI.knn_cond_mutual_information(x, y, z, k = 64, dualtree = True))
+#     surrs.append(np.mean(cmi_temp))
+# # print surrs
+# np.savetxt("temp1.txt", np.array(surrs))
+
+
+
+# import matplotlib.pyplot as plt
+# plt.plot(x[100:200], label = "x")
+# plt.plot(y[100:200], label = "y")
+# plt.legend()
+# plt.show()
 
 ## x - biennal, y - annual ## frequencies as 1:2
 
