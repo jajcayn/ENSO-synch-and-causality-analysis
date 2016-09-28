@@ -57,7 +57,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     # enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
     # enso = DataField()
 
-    enso = load_enso_index("nino34raw.txt", '3.4', date(1948, 1, 1), date(2016, 1, 1))
+    enso = load_enso_index("nino34raw.txt", '3.4', date(1870, 1, 1), date(1943, 1, 1))
     # fname = "conceptualRossler1:2monthlysampling_100eps0-0.25.dat"
     # r = read_rossler(fname)
     # x, y = r[0.0707][20000:52768, 0], r[0.0707][20000:52768, 1] # x is biennal, y is annual
@@ -196,7 +196,7 @@ if COMPUTE:
                 #     exa = pcs[3, :] # 1 -> 4
                 # elif num_ts == 2:
                 #     exa = pcs[0, :] # 4 -> 1
-                qbo = np.loadtxt("QBOindex-jan1948-dec2015.txt")
+                # qbo = np.loadtxt("QBOindex-jan1948-dec2015.txt")
                 ## DATA
                 #prepare result matrices
                 k0 = 6. # wavenumber of Morlet wavelet used in analysis
@@ -213,12 +213,12 @@ if COMPUTE:
                 phase_amp_condMI_knn = np.zeros_like(phase_phase_coherence_knn)
 
                 enso.center_data()
-                qbo -= np.nanmean(qbo, axis = 0)
-                print enso.data.shape, qbo.shape
+                # qbo -= np.nanmean(qbo, axis = 0)
+                print enso.data.shape
 
                 for i in range(phase_phase_coherence_knn.shape[0]):
                     sc_i = scales[i] / fourier_factor
-                    wave, _, _, _ = wvlt.continous_wavelet(qbo, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                    wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                     phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                     
                     for j in range(phase_phase_coherence_knn.shape[1]):
@@ -282,7 +282,7 @@ if COMPUTE:
 
                         for i in range(coh_knn.shape[0]):
                             sc_i = sc[i] / fourier_factor
-                            wave, _, _, _ = wvlt.continous_wavelet(qbo, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
+                            wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                             phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                             
                             for j in range(coh_knn.shape[1]):
@@ -377,7 +377,8 @@ if COMPUTE:
                 # fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # fname = ("kNN-Nino34-obs_CMImap4bins3Dcond-vs-Dima.bin")
                 # fname = ("conceptualRossler-no-synch-1:2-monthlyEQQ-and-kNN.bin")
-                fname = ("qbo-to-nino34-1948-2015-monthly-EQQandKNN.bin")
+                # fname = ("qbo-to-nino34-1948-2015-monthly-EQQandKNN.bin")
+                fname = ("nino34-1870-1943-monthly-EQQandKNN.bin")
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
                 # fname = ("kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
@@ -418,7 +419,7 @@ else:
             # fname = ("bins/python-model/Python-Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
             # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
             # fname = ("bins/kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
-            fname = 'bins/conceptualRossler-no-synch-1:2-monthlyEQQ-and-kNN-reversed.bin'
+            fname = 'bins/nino34-to-qbo-1948-2015-monthly-EQQandKNN.bin'
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
@@ -502,11 +503,11 @@ else:
                     ax.yaxis.set_major_locator(MultipleLocator(12))
                     ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
                     ax.yaxis.set_minor_locator(MultipleLocator(6))
-                    ax.set_xlabel("Nino3.4 period [years]", size = 20)
+                    ax.set_xlabel("NINO3.4 period [years]", size = 20)
                     # plt.colorbar(cs)
                     ax.grid()
                     if i % 2 == 0:
-                        ax.set_ylabel("Nino3.4 period [years]", size = 20)
+                        ax.set_ylabel("QBO period [years]", size = 20)
                     else:
                         # fig.colorbar(cs, ax = ax, shrink = 0.5)
                         pass
@@ -516,7 +517,7 @@ else:
                 # plt.savefig("plots/DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.png" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
                 # plt.savefig('plots/pro_knn/kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-FT.png' % num_ts)
-                plt.savefig('plots/conceptualRossler-1:2-no-synch-monthlyKNN-reversed.png')
+                plt.savefig('plots/qbo/nino34-to-qbo-KNN.png')
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
