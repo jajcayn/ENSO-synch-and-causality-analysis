@@ -57,7 +57,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     # enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
     # enso = DataField()
 
-    enso = load_enso_index("nino34raw.txt", '3.4', date(1870, 1, 1), date(1943, 1, 1))
+    enso = load_enso_index("nino34raw.txt", '3.4', date(1943, 1, 1), date(2016, 1, 1))
     # fname = "conceptualRossler1:2monthlysampling_100eps0-0.25.dat"
     # r = read_rossler(fname)
     # x, y = r[0.0707][20000:52768, 0], r[0.0707][20000:52768, 1] # x is biennal, y is annual
@@ -378,7 +378,7 @@ if COMPUTE:
                 # fname = ("kNN-Nino34-obs_CMImap4bins3Dcond-vs-Dima.bin")
                 # fname = ("conceptualRossler-no-synch-1:2-monthlyEQQ-and-kNN.bin")
                 # fname = ("qbo-to-nino34-1948-2015-monthly-EQQandKNN.bin")
-                fname = ("nino34-1870-1943-monthly-EQQandKNN.bin")
+                fname = ("nino34-1943-2016-monthly-EQQandKNN.bin")
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
                 # fname = ("kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
