@@ -57,7 +57,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     # enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
     # enso = DataField()
 
-    enso = load_enso_index("nino34raw.txt", '3.4', date(1943, 1, 1), date(2016, 1, 1))
+    enso = load_enso_index("nino34raw.txt", '3.4', date(1870, 1, 1), date(2016, 1, 1))
     # fname = "conceptualRossler1:2monthlysampling_100eps0-0.25.dat"
     # r = read_rossler(fname)
     # x, y = r[0.0707][20000:52768, 0], r[0.0707][20000:52768, 1] # x is biennal, y is annual
@@ -199,6 +199,8 @@ if COMPUTE:
                 # qbo = np.loadtxt("QBOindex-jan1948-dec2015.txt")
                 ## DATA
                 #prepare result matrices
+                # 1st PCA of spatial QBO
+                # qbo = np.loadtxt("/Users/nikola/work-ui/data/QBOspatial-2-PCA-jan1956-dec2015.txt")[:, 0]
                 k0 = 6. # wavenumber of Morlet wavelet used in analysis
                 # y = 12 # year in months
                 fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + np.power(k0,2)))
@@ -214,14 +216,14 @@ if COMPUTE:
 
                 enso.center_data()
                 # qbo -= np.nanmean(qbo, axis = 0)
-                print enso.data.shape
+                print enso.data.shape#, qbo.shape
 
-                for i in range(phase_phase_coherence_knn.shape[0]):
+                for i in range(phase_phase_coherence.shape[0]):
                     sc_i = scales[i] / fourier_factor
                     wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                     phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                     
-                    for j in range(phase_phase_coherence_knn.shape[1]):
+                    for j in range(phase_phase_coherence.shape[1]):
                         sc_j = scales[j] / fourier_factor
                         wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                         phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
@@ -280,12 +282,12 @@ if COMPUTE:
 
                         sg.center_surr()
 
-                        for i in range(coh_knn.shape[0]):
+                        for i in range(coh.shape[0]):
                             sc_i = sc[i] / fourier_factor
                             wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
                             phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                             
-                            for j in range(coh_knn.shape[1]):
+                            for j in range(coh.shape[1]):
                                 sc_j = sc[j] / fourier_factor
                                 wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                                 phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
@@ -319,6 +321,7 @@ if COMPUTE:
                                 ph_amp_CMI_knn[i, j] = np.mean(np.array(CMI2_knn))
 
                         resq.put((coh, cmi, ph_amp_MI, ph_amp_CMI, coh_knn, cmi_knn, ph_amp_MI_knn, ph_amp_CMI_knn))
+                        # resq.put((coh, cmi, ph_amp_MI, ph_amp_CMI))
 
 
                 ## SURROGATES
@@ -352,6 +355,7 @@ if COMPUTE:
 
                     while surr_completed < NUM_SURR:
                         coh, cmi, phAmp, phAmpCMI, coh_knn, cmi_knn, phAmp_knn, phAmpCMI_knn = resq.get()
+                        # coh, cmi, phAmp, phAmpCMI = resq.get()
                         surrCoherence[surr_completed, :, :] = coh
                         surrCMI[surr_completed, :, :] = cmi
                         surrPhaseAmp[surr_completed, :, :] = phAmp
@@ -377,8 +381,8 @@ if COMPUTE:
                 # fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # fname = ("kNN-Nino34-obs_CMImap4bins3Dcond-vs-Dima.bin")
                 # fname = ("conceptualRossler-no-synch-1:2-monthlyEQQ-and-kNN.bin")
-                # fname = ("qbo-to-nino34-1948-2015-monthly-EQQandKNN.bin")
-                fname = ("nino34-1943-2016-monthly-EQQandKNN.bin")
+                # fname = ("qbo-to-nino34-1948-2015-monthly-EQQonly.bin")
+                fname = ("nino34-1870-2016-FULL-monthly-EQQandKNN.bin")
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
                 # fname = ("kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
@@ -419,7 +423,7 @@ else:
             # fname = ("bins/python-model/Python-Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
             # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
             # fname = ("bins/kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
-            fname = 'bins/nino34-to-qbo-1948-2015-monthly-EQQandKNN.bin'
+            fname = 'bins/nino34-1870-1943-monthly-EQQandKNN.bin'
             CUT = slice(0,NUM_SURR)
             # version = 3
             with open(fname, 'rb') as f:
@@ -507,7 +511,7 @@ else:
                     # plt.colorbar(cs)
                     ax.grid()
                     if i % 2 == 0:
-                        ax.set_ylabel("QBO period [years]", size = 20)
+                        ax.set_ylabel("NINO3.4 period [years]", size = 20)
                     else:
                         # fig.colorbar(cs, ax = ax, shrink = 0.5)
                         pass
@@ -517,7 +521,7 @@ else:
                 # plt.savefig("plots/DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.png" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
                 # plt.savefig('plots/pro_knn/kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-FT.png' % num_ts)
-                plt.savefig('plots/qbo/nino34-to-qbo-KNN.png')
+                plt.savefig('plots/nino34-1870-1943-CMImap-KNN.png')
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
