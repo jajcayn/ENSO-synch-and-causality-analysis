@@ -158,7 +158,7 @@ def phase_diff(ph1, ph2):
     return ph
 
 WVLT_SPAN = [5,96] # unit is month 96
-NUM_SURR = 100
+NUM_SURR = 500
 WRKRS = 20
 # BINS = 4
 bins_list = [4]
@@ -299,7 +299,7 @@ if COMPUTE:
                                 # conditional mutual inf -- avg over lags 1 - 6 months
                                 CMI_temp = []
                                 CMI_temp_knn = []
-                                for tau in range(1, 7):
+                                for tau in range(1, 31):
                                     CMI_temp.append(MI.cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
                                         phase_j[:-tau], algorithm = 'EQQ2', bins = BINS))
                                     CMI_temp_knn.append(MI.knn_cond_mutual_information(phase_i[:-tau], phase_diff(phase_j[tau:], phase_j[:-tau]), 
@@ -313,7 +313,7 @@ if COMPUTE:
                                 CMI2 = []
                                 CMI2_knn = []
                                 eta = np.int(scales[i] / 4)
-                                for tau in range(1, 7): # possible 1-31
+                                for tau in range(1, 31): # possible 1-31
                                     x, yts, z = MI.get_time_series_condition([phase_i, np.power(amp_j,2)], tau = tau, dim_of_condition = 3, eta = eta)
                                     CMI2.append(MI.cond_mutual_information(x, yts, z, algorithm = 'GCM', bins = BINS))
                                     CMI2_knn.append(MI.knn_cond_mutual_information(x, yts, z, k = 64, dualtree = True))
@@ -382,7 +382,7 @@ if COMPUTE:
                 # fname = ("kNN-Nino34-obs_CMImap4bins3Dcond-vs-Dima.bin")
                 # fname = ("conceptualRossler-no-synch-1:2-monthlyEQQ-and-kNN.bin")
                 # fname = ("qbo-to-nino34-1948-2015-monthly-EQQonly.bin")
-                fname = ("nino34-1870-2016-FULL-monthly-EQQandKNN.bin")
+                fname = ("nino34-1870-2016-FULL-monthly-EQQandKNN-500FT-1-30avgCMI.bin")
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
                 # fname = ("kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
