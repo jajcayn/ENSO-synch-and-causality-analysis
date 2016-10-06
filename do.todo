@@ -12,3 +12,17 @@ PAPER:
 PAPER:
   ☐ QB cycles as THE mode of interest - dynamically
   ☐ example with moderate ENSO event 87-88
+  main points:
+   ☐ information theory shows causal relationships and synchronization between ENSO modes
+   ☐ QB cycle as vitally important in interactions
+   ☐ no current theory (Stein et al. wrong) explains QB cycle
+SI:
+  ☐ 1. methods: conceptual Rossler - our methods able to find out 
+  ☐ 2. nino3.4 halves analysis
+  ☐ 3. CMIP5 models
+
+☐ zjednotit sycnhro vs. coherence
+TO-DO:
+ ✔ v empirickom modeli skus miesto poly regresie nejaky z sklearn regressorov implementovat, pozri zakladne charakteristiky ze ci to dava zmysel, ak samotne EOFs nebudu dobre vyextrahovane features, skus pridat ich SVD ako v partial least squares...  @done (16-10-05 15:31)
+ ☐ ak hej, skus pouzit random forest a pozri dolezitosti jednotlivych featurov (pokial spravne rozumiem, features budu spracovane EOFs)
+
