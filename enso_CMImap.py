@@ -63,6 +63,11 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     # x, y = r[0.0707][20000:52768, 0], r[0.0707][20000:52768, 1] # 
     x, y = r[0.0253][20000:21024, 0], r[0.0253][20000:21024, 1] # x is annual, y is biennal
     print("rossler data read")
+
+    # add noise
+    x += np.random.normal(0, scale = 0.1*np.std(x, ddof = 1), size = (x.shape[0],))
+    y += np.random.normal(0, scale = 0.1*np.std(y, ddof = 1), size = (y.shape[0],))
+    print("added noise to rossler data...")
     # exa = np.loadtxt("ExA-comb-mode-20CR-1900-2010-PC2-stand.txt")
     # enso.data = exa.copy()
     # enso.data = enso_raw[:, 1]
@@ -381,7 +386,7 @@ if COMPUTE:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # fname = ("kNN-Nino34-obs_CMImap4bins3Dcond-vs-Dima.bin")
-                fname = ("conceptualRossler-no-synch-1:2-monthlyEQQ-and-kNN.bin")
+                fname = ("conceptualRossler-no-synch-1:2-monthlyEQQ-and-kNN-0.1noise-added.bin")
                 # fname = ("qbo-to-nino34-1948-2015-monthly-EQQonly.bin")
                 # fname = ("nino34-1870-1943-monthly-EQQandKNN-500FT-1-30avgCMI.bin")
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
