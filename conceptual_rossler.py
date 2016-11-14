@@ -30,13 +30,13 @@ def read_rossler(fname):
 
 
 fname = "conceptualRossler1:2monthlysampling_100eps0-0.25.dat"
-# r = read_rossler(fname)
-# print np.sort(r.keys())
+r = read_rossler(fname)
+print np.sort(r.keys())
 # x, y = r[0.2374][:, 0], r[0.2374][:, 1]
 # np.savetxt("temp.txt", r[0.2374][14276:18372, :], fmt = "%.8f")
-a = np.loadtxt("temp.txt")
+# a = np.loadtxt("temp.txt")
 # # print a.shape
-xts, yts = a[:2048, 0], a[:2048, 1]
+# xts, yts = a[:2048, 0], a[:2048, 1]
 
 # wave, _, _, _ = wvlt.continous_wavelet(xts, 1, True, wvlt.morlet, dj = 0, s0 = 24, j1 = 0, k0 = 6.)
 # phase_x = np.arctan2(np.imag(wave), np.real(wave))[0, :]
@@ -44,25 +44,26 @@ xts, yts = a[:2048, 0], a[:2048, 1]
 # wave, _, _, _ = wvlt.continous_wavelet(yts, 1, True, wvlt.morlet, dj = 0, s0 = 12, j1 = 0, k0 = 6.)
 # phase_y = np.arctan2(np.imag(wave), np.real(wave))[0, :]
 
-xts -= np.mean(xts)
-yts -= np.mean(yts)
-xts /= np.std(xts)
-yts /= np.std(yts)
+# xts -= np.mean(xts)
+# yts -= np.mean(yts)
+# xts /= np.std(xts)
+# yts /= np.std(yts)
 
-import scipy.signal as ss
+# import scipy.signal as ss
 
-maxima = ss.argrelextrema(yts[:200], np.greater)[0][1::2]
+# maxima = ss.argrelextrema(yts[:200], np.greater)[0][1::2]
 
-print maxima
+# print maxima
 
-plt.plot(xts[:200], color = "#109EB2", linewidth = 2.3)
-plt.plot(yts[:200] - 3.5, color = "#E67373", linewidth = 2.3)
-# plt.plot(maxima, yts[maxima] - 3.5, 'o')
-for i in range(maxima.shape[0]):
-    plt.axvline(maxima[i], 0, 1, color = 'grey', linewidth = 1.2, linestyle = '-.')
+# plt.plot(xts[:200], color = "#109EB2", linewidth = 2.3)
+# plt.plot(yts[:200] - 3.5, color = "#E67373", linewidth = 2.3)
+# # plt.plot(maxima, yts[maxima] - 3.5, 'o')
+# for i in range(maxima.shape[0]):
+#     plt.axvline(maxima[i], 0, 1, color = 'grey', linewidth = 1.2, linestyle = '-.')
 
+# plt.show()
 # plt.xlim([-20, 220])
-plt.savefig("phase-synch-ex.eps")
+# plt.savefig("phase-synch-ex.eps")
 
 
 

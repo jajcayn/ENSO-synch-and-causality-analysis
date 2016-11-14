@@ -25,4 +25,13 @@ SI:
 TO-DO:
  ✔ v empirickom modeli skus miesto poly regresie nejaky z sklearn regressorov implementovat, pozri zakladne charakteristiky ze ci to dava zmysel, ak samotne EOFs nebudu dobre vyextrahovane features, skus pridat ich SVD ako v partial least squares...  @done (16-10-05 15:31)
  ☐ ak hej, skus pouzit random forest a pozri dolezitosti jednotlivych featurov (pokial spravne rozumiem, features budu spracovane EOFs)
+ 
+
+SEMINAR V SKOLE:
+ ☐ skusit na SOI - lepsie data, viac do minulosti
+ ☐ celkovo viac pozriet atmo veliciny, lebo su merane za dlhsi cas a presnejsie
+ ☐ kauzalita je prilis silne, skor Granger causality, alebo causality (in Granger sense)
+ ☐ CMIP5 ze su mimo nie je prevkapujuce
+ ☐ bc tu na MFF: vzajemna informace a ENSO
+ ☐ posun ENSO - mozno nebrat NINO3.4 index, ktore su priestorovo confined ale nejako napr 1. PCA z SST ako ENSO casovu radu
 

@@ -11,7 +11,7 @@ epsilon_list = [[0, 0.25]]
 
 
 delay = 0
-freqs = [1.199, 2.398] # annual, and biennal frequencies when considering monthly sampling
+freqs = [2.398, 1.199] # annual, and biennal frequencies when considering monthly sampling
 name = '1:2'
 eps = [0, 0.25]
 
