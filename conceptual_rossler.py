@@ -29,7 +29,7 @@ def read_rossler(fname):
     return r
 
 
-fname = "conceptualRossler1:2monthlysampling_100eps0-0.25.dat"
+fname = "conceptualRossler2:1monthlysampling_100eps0-0.25.dat"
 r = read_rossler(fname)
 print np.sort(r.keys())
 # x, y = r[0.2374][:, 0], r[0.2374][:, 1]

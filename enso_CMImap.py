@@ -61,7 +61,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     fname = "conceptualRossler1:2monthlysampling_100eps0-0.25.dat"
     r = read_rossler(fname)
     # x, y = r[0.0707][20000:52768, 0], r[0.0707][20000:52768, 1] # 
-    x, y = r[0.2399][20000:52768, 0], r[0.2399][20000:52768, 1] # x is annual, y is biennal
+    x, y = r[0.0278][20000:52768, 0], r[0.0278][20000:52768, 1] # x is annual, y is biennal
     print("rossler data read")
 
     # add noise
@@ -386,7 +386,7 @@ if COMPUTE:
                     fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # fname = ("kNN-Nino34-obs_CMImap4bins3Dcond-vs-Dima.bin")
-                fname = ("conceptualRossler-synch-1:2--32kmonthlyEQQ-0.1noise-added.bin")
+                fname = ("conceptualRossler-no-synch-1:2--32kmonthlyEQQ-0.1noise-added.bin")
                 # fname = ("conceptualRossler-synch-1:2-monthlyEQQ-and-kNN.bin")
                 # fname = ("qbo-to-nino34-1948-2015-monthly-EQQonly.bin")
                 # fname = ("nino34-1870-1943-monthly-EQQandKNN-500FT-1-30avgCMI.bin")
