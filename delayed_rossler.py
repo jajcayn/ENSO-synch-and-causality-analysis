@@ -11,7 +11,7 @@ epsilon_list = [[0, 0.25]]
 
 
 delay = 0
-freqs = [2.398, 1.199] # annual, and biennal frequencies when considering monthly sampling
+freqs = [1.5987, 0.7994] # annual, and biennal frequencies when considering monthly sampling
 name = '1:2'
 eps = [0, 0.25]
 
@@ -29,6 +29,8 @@ eqns = {
     }
 
 eps_list = np.linspace(eps[0], eps[1], 100)
+# eps_list = np.array([0.2449, 0.0328])
+
 dt = 0.157*2
 
 rossler = {}
@@ -83,6 +85,7 @@ for epsilon in eps_list:
     print cnt, eps_list.shape[0]
 
 fname = "conceptualRossler%smonthlysampling_100eps0-%.2f.dat" % (name, eps[1])
+# fname = "ross-test.dat"
 f = open(fname, 'w')
 writer = csv.writer(f, lineterminator = "\n")
 cnt = 1
