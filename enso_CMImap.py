@@ -224,8 +224,8 @@ if COMPUTE:
 
                 enso.center_data()
                 # qbo -= np.nanmean(qbo, axis = 0)
-                y_ts -= np.nanmean(y_ts, axis = 0)
-                print enso.data.shape, y_ts.shape
+                # y_ts -= np.nanmean(y_ts, axis = 0)
+                print enso.data.shape#, y_ts.shape
 
                 for i in range(phase_phase_coherence.shape[0]):
                     sc_i = scales[i] / fourier_factor
