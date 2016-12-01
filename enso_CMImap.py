@@ -58,7 +58,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     # enso_raw = np.loadtxt("nino34m13.txt") # length x 2 as 1st column is continuous year, second is SST in degC
     # enso = DataField()
 
-    enso = load_enso_index("nino34raw.txt", '3.4', date(1900, 1, 1), date(2010, 1, 1))
+    enso = load_enso_index("nino34raw.txt", '3.4', date(1900, 1, 1), date(2011, 1, 1))
     # fname = "conceptualRossler1:2monthlysampling_100eps0-0.25.dat"
     # r = read_rossler(fname)
     # x, y = r[0.0707][20000:52768, 0], r[0.0707][20000:52768, 1] # 
