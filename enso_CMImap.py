@@ -12,7 +12,7 @@ import scipy.io as sio
 
 COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
-use_PRO_model = False
+use_PRO_model = True
 
 def read_rossler(fname):
     import csv
@@ -103,7 +103,7 @@ def load_enso_SSTs(num_ts = None, PROmodel = False, EMRmodel = None, DDEmodel = 
     if PROmodel:
         print("[%s] Integrating PRO model which will be used instead of ENSO SSTs..." % (str(datetime.now())))
         from parametric_recharge_oscillator import ENSO_PROmodel
-        PROmodel_enso = ENSO_PROmodel(length = enso.data.shape[0], daily = False, damped = True, ENSOperiod = 3.75, modulation = 2., lambda0 = 0.4)
+        PROmodel_enso = ENSO_PROmodel(length = enso.data.shape[0], daily = False, damped = False, ENSOperiod = 3.75, modulation = 2., lambda0 = 0.4)
         PROmodel_enso.integrate_PROmodel()
         enso.data = PROmodel_enso.data.copy()
 
@@ -164,7 +164,7 @@ def phase_diff(ph1, ph2):
     return ph
 
 WVLT_SPAN = [5,96] # unit is month, 96
-NUM_SURR = 200
+NUM_SURR = 100
 WRKRS = 20
 # BINS = 4
 bins_list = [4]
@@ -194,7 +194,7 @@ if COMPUTE:
                 # print("[%s] Evaluating %d. time series of %s model data... (%d out of %d models)" % (str(datetime.now()), 
                     # num_ts, CMIP5model, CMIP5models.index(CMIP5model)+1, len(CMIP5models)))
 
-                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = False, EMRmodel = None, DDEmodel = None)
+                enso, enso_sg, seasonality = load_enso_SSTs(num_ts, PROmodel = True, EMRmodel = None, DDEmodel = None)
                 #exa = sio.loadmat('Nino34-SST-x-wind-40PCsel.mat')['wind_sim'][:, 1, num_ts]
                 # if num_ts == 0:
                 #     exa = enso.data.copy() # 1 -> 1
@@ -211,13 +211,13 @@ if COMPUTE:
                 # y = 12 # year in months
                 fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + np.power(k0,2)))
                 scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
-                # phase_phase_coherence = np.zeros((scales.shape[0], scales.shape[0]))
-                phase_phase_coherence = np.zeros((scales.shape[0], 1))
+                phase_phase_coherence = np.zeros((scales.shape[0], scales.shape[0]))
+                # phase_phase_coherence = np.zeros((scales.shape[0], 1))
                 phase_phase_CMI = np.zeros_like(phase_phase_coherence)
                 phase_amp_MI = np.zeros_like(phase_phase_coherence)
                 phase_amp_condMI = np.zeros_like(phase_phase_coherence)
-                # phase_phase_coherence_knn = np.zeros((scales.shape[0], scales.shape[0]))
-                phase_phase_coherence_knn = np.zeros((scales.shape[0], 1))
+                phase_phase_coherence_knn = np.zeros((scales.shape[0], scales.shape[0]))
+                # phase_phase_coherence_knn = np.zeros((scales.shape[0], 1))
                 phase_phase_CMI_knn = np.zeros_like(phase_phase_coherence_knn)
                 phase_amp_MI_knn = np.zeros_like(phase_phase_coherence_knn)
                 phase_amp_condMI_knn = np.zeros_like(phase_phase_coherence_knn)
@@ -233,23 +233,23 @@ if COMPUTE:
                     phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                     
                     for j in range(phase_phase_coherence.shape[1]):
-                        # sc_j = scales[j] / fourier_factor
-                        sc_j = 12 / fourier_factor
+                        sc_j = scales[j] / fourier_factor
+                        # sc_j = 12 / fourier_factor
                         wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                         phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                         
-                        ###################
-                        # continuous phase
-                        for t in range(phase_j.shape[0] - 1):
-                            if np.abs(phase_j[t+1] - phase_j[t]) > 1.:
-                                phase_j[t+1:] += 2*np.pi
+                        # ###################
+                        # # continuous phase
+                        # for t in range(phase_j.shape[0] - 1):
+                        #     if np.abs(phase_j[t+1] - phase_j[t]) > 1.:
+                        #         phase_j[t+1:] += 2*np.pi
                         
-                        # phase fluctuations
-                        omega = 2*np.pi / (12 * 1) # annual
-                        ph0 = phase_j[0]
-                        for t in range(phase_j.shape[0]):
-                            phase_j[t] -= (ph0 + omega*t)
-                        ###################
+                        # # phase fluctuations
+                        # omega = 2*np.pi / (12 * 1) # annual
+                        # ph0 = phase_j[0]
+                        # for t in range(phase_j.shape[0]):
+                        #     phase_j[t] -= (ph0 + omega*t)
+                        # ###################
 
                         amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
@@ -295,13 +295,13 @@ if COMPUTE:
 
                         # sg.surr_data = s.copy()
 
-                        # coh = np.zeros((sc.shape[0], sc.shape[0]))
-                        coh = np.zeros((sc.shape[0], 1))
+                        coh = np.zeros((sc.shape[0], sc.shape[0]))
+                        # coh = np.zeros((sc.shape[0], 1))
                         cmi = np.zeros_like(phase_phase_coherence)
                         ph_amp_MI = np.zeros_like(phase_phase_coherence)
                         ph_amp_CMI = np.zeros_like(phase_phase_coherence)
-                        # coh_knn = np.zeros((sc.shape[0], sc.shape[0]))
-                        coh_knn = np.zeros((sc.shape[0], 1))
+                        coh_knn = np.zeros((sc.shape[0], sc.shape[0]))
+                        # coh_knn = np.zeros((sc.shape[0], 1))
                         cmi_knn = np.zeros_like(phase_phase_coherence_knn)
                         ph_amp_MI_knn = np.zeros_like(phase_phase_coherence_knn)
                         ph_amp_CMI_knn = np.zeros_like(phase_phase_coherence_knn)
@@ -314,23 +314,23 @@ if COMPUTE:
                             phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
                             
                             for j in range(coh.shape[1]):
-                                # sc_j = sc[j] / fourier_factor
-                                sc_j = 12 / fourier_factor
+                                sc_j = sc[j] / fourier_factor
+                                # sc_j = 12 / fourier_factor
                                 wave, _, _, _ = wvlt.continous_wavelet(sg.surr_data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
                                 phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
 
-                                ###################
-                                # continuous phase
-                                for t in range(phase_j.shape[0] - 1):
-                                    if np.abs(phase_j[t+1] - phase_j[t]) > 1.:
-                                        phase_j[t+1:] += 2*np.pi
+                                # ###################
+                                # # continuous phase
+                                # for t in range(phase_j.shape[0] - 1):
+                                #     if np.abs(phase_j[t+1] - phase_j[t]) > 1.:
+                                #         phase_j[t+1:] += 2*np.pi
                                 
-                                # phase fluctuations
-                                omega = 2*np.pi / (12 * 1) # annual
-                                ph0 = phase_j[0]
-                                for t in range(phase_j.shape[0]):
-                                    phase_j[t] -= (ph0 + omega*t)
-                                ###################
+                                # # phase fluctuations
+                                # omega = 2*np.pi / (12 * 1) # annual
+                                # ph0 = phase_j[0]
+                                # for t in range(phase_j.shape[0]):
+                                #     phase_j[t] -= (ph0 + omega*t)
+                                # ###################
 
                                 amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
 
@@ -418,14 +418,14 @@ if COMPUTE:
 
                 # fname = ("CMImap%dbins3Dcond_GaussCorr_%sts%d.bin" % (BINS, CMIP5model, num_ts))
                 if use_PRO_model:
-                    fname = ("PROdamped-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
+                    fname = ("PROneutral-CMImap%dbins3Dcond_GaussCorr.bin" % (BINS))
                 # fname = ("DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.bin" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # fname = ("kNN-Nino34-obs_CMImap4bins3Dcond-vs-Dima.bin")
                 # fname = ("conceptualRossler-NOsynch-1:2-monthlyEQQ.bin")
                 # fname = ("conceptualRossler-eps=0.1465-synch-1:2-monthlyEQQ-and-kNN-added-noise.bin")
                 # fname = ("qbo-to-nino34-1948-2015-monthly-EQQonly.bin")
                 # fname = ("nino34-1870-1943-monthly-EQQandKNN-500FT-1-30avgCMI.bin")
-                fname = ("nino34-1900-2010-monthly-EQQandKNN-annual-ph-flucts.bin")
+                # fname = ("nino34-1900-2010-monthly-EQQandKNN-annual-ph-flucts.bin")
                 # fname = ("SST-PCs-type%d_CMImap4bins3Dcond-against-500FT.bin" % (num_ts))
                 # fname = ("kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-against-500FT.bin" % (num_ts))
                 # fname = ("PC1-wind-vs-ExA-comb-mode-as-x-vs-y_CMImap4bins3Dcond-500FT.bin")
@@ -467,7 +467,7 @@ else:
             # fname = ("bins/python-model/Python-Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
             # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
             # fname = ("bins/Sergey-Nino34-ERM-linear-SST-20PC-L3-multiplicative-5mon-snippets_CMImap4bins3Dcond%d-against-basicERM.bin" % (num_ts))
-            fname = 'bins/conceptualRossler-eps=0.1465-synch-1:2-monthlyEQQ-and-kNN-added-noise.bin'
+            fname = 'bins/nino34-1943-2016-monthly-EQQandKNN-500FT-1-30avgCMI.bin'
             CUT = slice(0,NUM_SURR)
             # version = 3
             if num_ts == 8:
@@ -477,12 +477,12 @@ else:
 
             phase_phase_coherence = result['phase x phase data']
             phase_phase_CMI = result['phase CMI data']
-            surrCoherence = result['phase x phase surrs'][CUT, ...]
-            surrCMI = result['phase CMI surrs'][CUT, ...]
+            surrCoherence = result['phase x phase surrs']
+            surrCMI = result['phase CMI surrs']
             phase_amp_MI = result['phase x amp data']
             phase_amp_condMI = result['phase amp CMI data']
-            surrPhaseAmp = result['phase x amp surrs'][CUT, ...]
-            surrPhaseAmpCMI = result['phase amp CMI surrs'][CUT, ...]
+            surrPhaseAmp = result['phase x amp surrs']
+            surrPhaseAmpCMI = result['phase amp CMI surrs']
 
             print num_ts, "loaded"
 
@@ -513,15 +513,15 @@ else:
                 gs = gridspec.GridSpec(1, 2)
                 gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
                 axs = [gs[0,0], gs[0,1]]
-                plot = [res_phase_cmi.T, res_phase_amp_CMI.T]
-                # plot = [res_phase_coh.T, res_phase_amp_CMI.T]
-                tits = ['PHASE-PHASE CAUSALITY', 'PHASE-AMP CAUSALITY']
-                # tits = ['PHASE SYNCHRONIZATION', '']
-                labs = ['PHASE', 'AMP']
-                # labs = ['PHASE', '']
+                # plot = [res_phase_cmi.T, res_phase_amp_CMI.T]
+                plot = [res_phase_coh.T, res_phase_cmi.T]
+                # tits = ['PHASE-PHASE CAUSALITY', 'PHASE-AMP CAUSALITY']
+                tits = ['PHASE SYNCHRONIZATION', 'PHASE-PHASE CAUSALITY']
+                # labs = ['PHASE', 'AMP']
+                labs = ['PHASE', 'PHASE']
                 for ax, cont, tit, lab in zip(axs, plot, tits, labs):
                     ax = plt.subplot(ax)
-                    cs = ax.contourf(x, y, cont, levels = np.arange(0.99, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
+                    cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
                     # cs = ax.contourf(x, y, cont, levels = np.arange(4, 20, 0.125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
                     ax.tick_params(axis='both', which='major', labelsize = 20)
                     ax.set_title(tit, size = 30)
@@ -531,11 +531,11 @@ else:
                     ax.yaxis.set_major_locator(MultipleLocator(12))
                     ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: int(x)/12))
                     ax.yaxis.set_minor_locator(MultipleLocator(6))
-                    ax.set_xlabel("PERIOD ANNUAL PHASE [years]", size = 23)
+                    ax.set_xlabel("PERIOD PHASE [years]", size = 23)
                     # plt.colorbar(cs)
                     ax.grid()
-                    ax.set_ylabel("PERIOD BIENNAL %s [years]" % lab, size = 23)
-                plt.savefig('plots/conceptualRossler-synch-1:2-monthlyKNN.png', bbox_inches = "tight")
+                    ax.set_ylabel("PERIOD %s [years]" % lab, size = 23)
+                plt.savefig('plots/robustness2st-knn.eps', bbox_inches = "tight")
             else:
                 fig = plt.figure(figsize=(15,15))
                 gs = gridspec.GridSpec(2, 2)
@@ -569,7 +569,7 @@ else:
                 # plt.savefig("plots/DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.png" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
                 # plt.savefig('plots/pro_knn/kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-FT.png' % num_ts)
-                plt.savefig('plots/conceptualRossler-eps=0.1465-synch-1:2-monthly-noiseEQQ.png')
+                plt.savefig('plots/nino34-1943-2016-CMImap-500FT-1-30avg-EQQ.eps')
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
