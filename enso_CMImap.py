@@ -10,7 +10,7 @@ import sys
 import matplotlib.gridspec as gridspec
 import scipy.io as sio
 
-COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = True
 
@@ -444,7 +444,7 @@ if COMPUTE:
 else:
     CMIP5models = ['linear-20PC-L3-seasonal']
     BINS = 4
-    PUB = False
+    PUB = True
     # WVLT_SPAN = [5,93]
     for CMIP5model in CMIP5models:
         # fname = CMIP5model + '.txt'
@@ -467,7 +467,7 @@ else:
             # fname = ("bins/python-model/Python-Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
             # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
             # fname = ("bins/Sergey-Nino34-ERM-linear-SST-20PC-L3-multiplicative-5mon-snippets_CMImap4bins3Dcond%d-against-basicERM.bin" % (num_ts))
-            fname = 'bins/nino34-1943-2016-monthly-EQQandKNN-500FT-1-30avgCMI.bin'
+            fname = 'bins/PROneutral-CMImap4bins3Dcond_GaussCorr.bin'
             CUT = slice(0,NUM_SURR)
             # version = 3
             if num_ts == 8:
@@ -475,14 +475,14 @@ else:
             with open(fname, 'rb') as f:
                 result = cPickle.load(f)
 
-            phase_phase_coherence = result['phase x phase data']
-            phase_phase_CMI = result['phase CMI data']
-            surrCoherence = result['phase x phase surrs']
-            surrCMI = result['phase CMI surrs']
-            phase_amp_MI = result['phase x amp data']
-            phase_amp_condMI = result['phase amp CMI data']
-            surrPhaseAmp = result['phase x amp surrs']
-            surrPhaseAmpCMI = result['phase amp CMI surrs']
+            phase_phase_coherence = result['phase x phase data knn']
+            phase_phase_CMI = result['phase CMI data knn']
+            surrCoherence = result['phase x phase surrs knn']
+            surrCMI = result['phase CMI surrs knn']
+            phase_amp_MI = result['phase x amp data knn']
+            phase_amp_condMI = result['phase amp CMI data knn']
+            surrPhaseAmp = result['phase x amp surrs knn']
+            surrPhaseAmpCMI = result['phase amp CMI surrs knn']
 
             print num_ts, "loaded"
 
@@ -513,12 +513,12 @@ else:
                 gs = gridspec.GridSpec(1, 2)
                 gs.update(left=0.05, right=0.95, hspace=0.3, top=0.95, bottom=0.05, wspace=0.15)
                 axs = [gs[0,0], gs[0,1]]
-                # plot = [res_phase_cmi.T, res_phase_amp_CMI.T]
-                plot = [res_phase_coh.T, res_phase_cmi.T]
-                # tits = ['PHASE-PHASE CAUSALITY', 'PHASE-AMP CAUSALITY']
-                tits = ['PHASE SYNCHRONIZATION', 'PHASE-PHASE CAUSALITY']
-                # labs = ['PHASE', 'AMP']
-                labs = ['PHASE', 'PHASE']
+                plot = [res_phase_cmi.T, res_phase_amp_CMI.T]
+                # plot = [res_phase_coh.T, res_phase_cmi.T]
+                tits = ['PHASE-PHASE CAUSALITY', 'PHASE-AMP CAUSALITY']
+                # tits = ['PHASE SYNCHRONIZATION', 'PHASE-PHASE CAUSALITY']
+                labs = ['PHASE', 'AMP']
+                # labs = ['PHASE', 'PHASE']
                 for ax, cont, tit, lab in zip(axs, plot, tits, labs):
                     ax = plt.subplot(ax)
                     cs = ax.contourf(x, y, cont, levels = np.arange(0.95, 1, 0.00125), cmap = plt.cm.get_cmap("jet"), extend = 'max')
@@ -535,7 +535,7 @@ else:
                     # plt.colorbar(cs)
                     ax.grid()
                     ax.set_ylabel("PERIOD %s [years]" % lab, size = 23)
-                plt.savefig('plots/robustness2st-knn.eps', bbox_inches = "tight")
+                plt.savefig('plots/PROneutral-KNN.eps', bbox_inches = "tight")
             else:
                 fig = plt.figure(figsize=(15,15))
                 gs = gridspec.GridSpec(2, 2)
@@ -569,7 +569,7 @@ else:
                 # plt.savefig("plots/DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.png" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
                 # plt.savefig('plots/pro_knn/kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-FT.png' % num_ts)
-                plt.savefig('plots/nino34-1943-2016-CMImap-500FT-1-30avg-EQQ.eps')
+                plt.savefig('plots/PROneutral-KNN-100FT.png')
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 
