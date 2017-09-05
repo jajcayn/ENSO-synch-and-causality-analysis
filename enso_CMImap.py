@@ -293,7 +293,7 @@ if COMPUTE:
                         s = jobq.get()
                         if s is None:
                             break
-                        sg.construct_fourier_surrogates_spatial()
+                        sg.construct_fourier_surrogates(algorithm = 'FT')
                         sg.add_seasonality(mean, var, None)
 
                         # sg.surr_data = s.copy()
