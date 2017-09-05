@@ -80,7 +80,7 @@ class ENSO_PROmodel():
                 y[i, 1] = y[i-1, 1] + dt * self._PRO_model(t_tmp, y[i-1, :], self.damped, sigma = sigma)[1]
                 t_tmp += dt
 
-            temp = y[140*self.year:, 0]
+            temp = y[140*int(self.year):, 0]
 
             ts = []
 

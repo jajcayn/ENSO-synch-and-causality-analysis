@@ -1,7 +1,7 @@
 import numpy as np
 import sys
 sys.path.append('/Users/nikola/work-ui/multi-scale')
-from src.data_class import load_ERSST_data
+from src.data_class import load_ERSST_data, load_enso_index
 from src.ssa import ssa_class
 from datetime import date
 import matplotlib.pyplot as plt
@@ -18,95 +18,134 @@ sst.flatten_field()
 sst_ts = sst.data.copy()
 print sst_ts.shape # averaged over lat -10 - 10, lon by 8 degrees
 
+nino34 = load_enso_index("/Users/nikola/work-ui/data/nino34raw.txt", '3.4', date(1900, 1, 1), date(2011, 1, 1), anom = True)
 
-M = 61
+
+M = 72
 sst_ssa = ssa_class(sst_ts, M = M, compute_rc = False) # 61 months
+nino_ssa = ssa_class(nino34.data, M = M, compute_rc = False)
 lam, e, pc = sst_ssa.run_ssa()
-num = sst_ssa.run_Monte_Carlo(1000, method = "rank-def")
+lam_nino, e_nino, pc_nino = nino_ssa.run_ssa()
+# num = sst_ssa.run_Monte_Carlo(1000, method = "rank-def")
 # print lam.shape, e.shape, pc.shape
-# lr, er, pcr = sst_ssa.apply_varimax(S = 20, sort_lam = True)
-# print lr.shape, er.shape, pcr.shape
+lr, er, pcr = sst_ssa.apply_varimax(S = 20, sort_lam = True)
+# lr_nino, er_nino, pcr_nino = nino_ssa.apply_varimax(S = 20, sort_lam = True)
+print lr.shape, er.shape, pcr.shape
 
 
-# plt.semilogy(lam[:60], 's', linestyle = 'none', fillstyle = 'none', markersize = 10, color = 'b', label = "SST unrot")
-# plt.semilogy(lr[:60], linestyle = 'none', marker = 'o', fillstyle = 'none', color = 'k', markersize = 10, label = "SST rot")
-# plt.legend(loc = 1)
+plt.semilogy(lam[:40], 's', linestyle = 'none', fillstyle = 'none', markersize = 10, color = 'b', label = "SST unrot")
+plt.semilogy(lr[:40], linestyle = 'none', marker = 'o', fillstyle = 'none', color = 'k', markersize = 10, label = "SST rot")
+plt.semilogy(lam_nino[:40], 'v', linestyle = 'none', fillstyle = 'none', markersize = 10, color = 'b', label = "NINO")
+# plt.semilogy(lr_nino[:40], linestyle = 'none', marker = '^', fillstyle = 'none', color = 'k', markersize = 10, label = "NINO rot")
+plt.legend(loc = 1)
 # plt.savefig("plots/SSA-SST-eigenvals-hires.png")
-# plt.show()
+plt.show()
 
-# import scipy.signal as ss
-# plt.figure()
+import scipy.signal as ss
+plt.figure()
 # # unrot
-# f, px = ss.welch(pc[:, 1], fs = 1./2.628e+6, scaling = 'spectrum')
-# f *= 3.154e+7
-# plt.semilogy(f, px, '-', color = '#241632', linewidth = 1.2, label = "PC2 unrot")
-# f, px = ss.welch(pc[:, 3], fs = 1./2.628e+6, scaling = 'spectrum')
-# f *= 3.154e+7
-# plt.semilogy(f, px, '-', color = '#DE5F48', linewidth = 1.2, label = "PC4 unrot")
-# f, px = ss.welch(pc[:, 5], fs = 1./2.628e+6, scaling = 'spectrum')
-# f *= 3.154e+7
-# plt.semilogy(f, px, '-', color = '#C7BE2E', linewidth = 1.2, label = "PC6 unrot")
+f, px = ss.welch(pc[:, 1], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '-', color = '#241632', linewidth = 1.2, label = "SST: PC2 unrot")
+f, px = ss.welch(pc[:, 3], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '-', color = '#DE5F48', linewidth = 1.2, label = "SST: PC4 unrot")
+f, px = ss.welch(pc[:, 5], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '-', color = '#C7BE2E', linewidth = 1.2, label = "SST: PC6 unrot")
+#
+f, px = ss.welch(pc_nino[:, 1], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '-.', color = '#241632', linewidth = 1.2, label = "NINO: PC2")
+f, px = ss.welch(pc_nino[:, 3], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '-.', color = '#DE5F48', linewidth = 1.2, label = "NINO: PC4")
+f, px = ss.welch(pc_nino[:, 5], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '-.', color = '#C7BE2E', linewidth = 1.2, label = "NINO: PC6")
 
-# # rot
-# f, px = ss.welch(pcr[:, 1], fs = 1./2.628e+6, scaling = 'spectrum')
+# rot
+f, px = ss.welch(pcr[:, 1], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '--', color = '#241632', linewidth = 1.2, label = "SST: PC2 rot")
+f, px = ss.welch(pcr[:, 3], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '--', color = '#DE5F48', linewidth = 1.2, label = "SST: PC4 rot")
+f, px = ss.welch(pcr[:, 5], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '--', color = '#C7BE2E', linewidth = 1.2, label = "SST: PC6 rot")
+#
+# f, px = ss.welch(pcr_nino[:, 1], fs = 1./2.628e+6, scaling = 'spectrum')
 # f *= 3.154e+7
-# plt.semilogy(f, px, '--', color = '#241632', linewidth = 1.2, label = "PC2 rot")
-# f, px = ss.welch(pcr[:, 3], fs = 1./2.628e+6, scaling = 'spectrum')
+# plt.semilogy(f, px, ':', color = '#241632', linewidth = 1.2, label = "NINO: PC2 rot")
+# f, px = ss.welch(pcr_nino[:, 3], fs = 1./2.628e+6, scaling = 'spectrum')
 # f *= 3.154e+7
-# plt.semilogy(f, px, '--', color = '#DE5F48', linewidth = 1.2, label = "PC4 rot")
-# f, px = ss.welch(pcr[:, 5], fs = 1./2.628e+6, scaling = 'spectrum')
+# plt.semilogy(f, px, ':', color = '#DE5F48', linewidth = 1.2, label = "NINO: PC4 rot")
+# f, px = ss.welch(pcr_nino[:, 5], fs = 1./2.628e+6, scaling = 'spectrum')
 # f *= 3.154e+7
-# plt.semilogy(f, px, '--', color = '#C7BE2E', linewidth = 1.2, label = "PC6 rot")
+# plt.semilogy(f, px, ':', color = '#C7BE2E', linewidth = 1.2, label = "NINO: PC6 rot")
 
-# plt.legend()
-# plt.xlim([0, 2])
-# plt.gca().xaxis.set_major_locator(MultipleLocator(0.5))
-# plt.gca().xaxis.set_minor_locator(MultipleLocator(0.2))
+plt.legend()
+plt.xlim([0, 2])
+plt.gca().xaxis.set_major_locator(MultipleLocator(0.5))
+plt.gca().xaxis.set_minor_locator(MultipleLocator(0.2))
 
-# plt.axvline(1, linestyle = '-.', color = "0.7", linewidth = 0.9)
-# plt.axvline(0.5, linestyle = '-.', color = "0.7", linewidth = 0.9)
-# plt.axvline(0.25, linestyle = '-.', color = "0.7", linewidth = 0.9)
+plt.axvline(1, linestyle = '-.', color = "0.7", linewidth = 0.9)
+plt.axvline(0.5, linestyle = '-.', color = "0.7", linewidth = 0.9)
+plt.axvline(0.25, linestyle = '-.', color = "0.7", linewidth = 0.9)
 
-# plt.ylabel("spectral power")
-# plt.xlabel("cycles/year")
+plt.ylabel("spectral power")
+plt.xlabel("cycles/year")
 # plt.savefig("plots/SSA-SST-PCspectra246-hires.png")
+plt.show()
 # plt.close()
 
 
-# plt.figure()
-# # unrot
-# f, px = ss.welch(pc[:, 0], fs = 1./2.628e+6, scaling = 'spectrum')
-# f *= 3.154e+7
-# plt.semilogy(f, px, '-', color = '#241632', linewidth = 1.2, label = "PC1 unrot")
-# f, px = ss.welch(pc[:, 2], fs = 1./2.628e+6, scaling = 'spectrum')
-# f *= 3.154e+7
-# plt.semilogy(f, px, '-', color = '#DE5F48', linewidth = 1.2, label = "PC3 unrot")
-# f, px = ss.welch(pc[:, 4], fs = 1./2.628e+6, scaling = 'spectrum')
-# f *= 3.154e+7
-# plt.semilogy(f, px, '-', color = '#C7BE2E', linewidth = 1.2, label = "PC5 unrot")
+plt.figure()
+# unrot
+f, px = ss.welch(pc[:, 0], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '-', color = '#241632', linewidth = 1.2, label = "SST: PC1 unrot")
+f, px = ss.welch(pc[:, 2], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '-', color = '#DE5F48', linewidth = 1.2, label = "SST: PC3 unrot")
+f, px = ss.welch(pc[:, 4], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '-', color = '#C7BE2E', linewidth = 1.2, label = "SST: PC5 unrot")
 
-# # rot
-# f, px = ss.welch(pcr[:, 0], fs = 1./2.628e+6, scaling = 'spectrum')
-# f *= 3.154e+7
-# plt.semilogy(f, px, '--', color = '#241632', linewidth = 1.2, label = "PC1 rot")
-# f, px = ss.welch(pcr[:, 2], fs = 1./2.628e+6, scaling = 'spectrum')
-# f *= 3.154e+7
-# plt.semilogy(f, px, '--', color = '#DE5F48', linewidth = 1.2, label = "PC3 rot")
-# f, px = ss.welch(pcr[:, 4], fs = 1./2.628e+6, scaling = 'spectrum')
-# f *= 3.154e+7
-# plt.semilogy(f, px, '--', color = '#C7BE2E', linewidth = 1.2, label = "PC5 rot")
+f, px = ss.welch(pc_nino[:, 0], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '-.', color = '#241632', linewidth = 1.2, label = "NINO: PC1")
+f, px = ss.welch(pc_nino[:, 2], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '-.', color = '#DE5F48', linewidth = 1.2, label = "NINO: PC3")
+f, px = ss.welch(pc_nino[:, 4], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '-.', color = '#C7BE2E', linewidth = 1.2, label = "NINO: PC5")
 
-# plt.legend()
-# plt.xlim([0, 2])
-# plt.gca().xaxis.set_major_locator(MultipleLocator(0.5))
-# plt.gca().xaxis.set_minor_locator(MultipleLocator(0.2))
+# rot
+f, px = ss.welch(pcr[:, 0], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '--', color = '#241632', linewidth = 1.2, label = "SST: PC1 rot")
+f, px = ss.welch(pcr[:, 2], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '--', color = '#DE5F48', linewidth = 1.2, label = "SST: PC3 rot")
+f, px = ss.welch(pcr[:, 4], fs = 1./2.628e+6, scaling = 'spectrum')
+f *= 3.154e+7
+plt.semilogy(f, px, '--', color = '#C7BE2E', linewidth = 1.2, label = "SST: PC5 rot")
 
-# plt.axvline(1, linestyle = '-.', color = "0.7", linewidth = 0.9)
-# plt.axvline(0.5, linestyle = '-.', color = "0.7", linewidth = 0.9)
-# plt.axvline(0.25, linestyle = '-.', color = "0.7", linewidth = 0.9)
+plt.legend()
+plt.xlim([0, 2])
+plt.gca().xaxis.set_major_locator(MultipleLocator(0.5))
+plt.gca().xaxis.set_minor_locator(MultipleLocator(0.2))
 
-# plt.ylabel("spectral power")
-# plt.xlabel("cycles/year")
+plt.axvline(1, linestyle = '-.', color = "0.7", linewidth = 0.9)
+plt.axvline(0.5, linestyle = '-.', color = "0.7", linewidth = 0.9)
+plt.axvline(0.25, linestyle = '-.', color = "0.7", linewidth = 0.9)
+
+plt.ylabel("spectral power")
+plt.xlabel("cycles/year")
+plt.show()
 # plt.savefig("plots/SSA-SST-PCspectra135-hires.png")
 
 
