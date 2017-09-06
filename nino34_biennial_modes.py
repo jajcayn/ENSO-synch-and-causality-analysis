@@ -23,7 +23,7 @@ enso.return_seasonality(mean, var, trend)
 # plt.plot(enso.data[36:-36], label = "raw SST")
 
 # enso.wavelet(12., period_unit = 'm', cut = 36, regress_amp_to_data = True)#, cut_data = True, cut_time = True)
-enso.temporal_filter(cutoff = [18, 30], btype = 'bandpass', cut = 3, cut_time = True, cut_data = True)
+enso.temporal_filter(cutoff = [18, 30], btype = 'bandpass', cut = 3)#, cut_time = True, cut_data = True)
 lf = enso.filtered_data.copy()
 # hilb = ss.hilbert(enso.filtered_data)
 # enso.phase = np.arctan2(np.imag(hilb), np.real(hilb))
@@ -41,10 +41,28 @@ for t in range(bins_ts.shape[0]):
     else:
         bins_ts[t] = 2
 
+
+enso.wavelet(12*5, period_unit = 'm', cut = 36, regress_amp_to_data = True, cut_data = True, cut_time = True)
+# hilb = ss.hilbert(enso.filtered_data)
+# enso.phase = np.arctan2(np.imag(hilb), np.real(hilb))
+# enso.amplitude = np.sqrt(np.power(np.real(hilb),2) + np.power(np.imag(hilb),2))
+lf = enso.amplitude * np.cos(enso.phase)
+
+bins_ts = np.zeros_like(lf)
+bins = np.linspace(lf.min(), lf.max(), 4)
+print bins
+for t in range(bins_ts.shape[0]):
+    if lf[t] < bins[1]:
+        bins_ts[t] = 0
+    elif (lf[t] > bins[1]) and (lf[t] < bins[2]):
+        bins_ts[t] = 1
+    else:
+        bins_ts[t] = 2
+
 # plt.plot(bins_ts)
 # plt.show()
 
-seasonal_cycle = np.zeros((12, 4))
+seasonal_cycle = np.zeros((12, 7))
 for b, lab, col, ls in zip(range(4), ['QB-', 'QB0', 'QB+', 'overall'], ['#1f77b4', '#673d00', '#c03634', 'k'], ['--', '--', '--', '-']):
     for mon in range(1,13):
         sel = enso.select_months(months = [mon], apply_to_data = False)
