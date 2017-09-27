@@ -1,3 +1,8 @@
+"""
+Plots CMI analysis from pickled bin files.
+"""
+
+
 import cPickle
 import numpy as np
 import matploltlib

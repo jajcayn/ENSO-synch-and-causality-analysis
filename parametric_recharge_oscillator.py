@@ -1,3 +1,8 @@
+"""
+Implements Parametric Recharge Oscillator of NINO3.4 as per Stein et al., J. CLimate, 27, 2014.
+"""
+
+
 import numpy as np
 from scipy import integrate
 from scipy.signal import hilbert

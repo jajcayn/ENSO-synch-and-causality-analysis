@@ -1,3 +1,8 @@
+"""
+Computes spectrum of NINO34 data.
+"""
+
+
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -8,12 +13,10 @@ from matplotlib.ticker import MultipleLocator, FuncFormatter
 import cPickle
 import sys
 import matplotlib.gridspec as gridspec
-sys.path.append('/Users/nikola/work-ui/multi-scale')
-# sys.path.append("/home/nikola/Work/multi-scale")
-import src.wavelet_analysis as wvlt
-import src.mutual_information as MI
-from src.data_class import DataField
-from src.surrogates import SurrogateField
+import pyclits.wavelet_analysis as wvlt
+import pyclits.mutual_information as MI
+from pyclits.geofield import DataField
+from pyclits.surrogates import SurrogateField
 
 
 

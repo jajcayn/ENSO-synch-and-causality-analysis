@@ -1,3 +1,7 @@
+"""
+Compares spectra of CMIP5.
+"""
+
 import numpy as np
 import cPickle
 

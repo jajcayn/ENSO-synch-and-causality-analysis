@@ -1,23 +1,26 @@
+"""
+Computes and plots NINO34 spectra in two periods.
+"""
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from matplotlib.ticker import MultipleLocator, FuncFormatter
 import cPickle
-import sys
 import matplotlib.gridspec as gridspec
-sys.path.append('/Users/nikola/work-ui/multi-scale')
-# sys.path.append("/home/nikola/Work/multi-scale")
-import src.wavelet_analysis as wvlt
-import src.mutual_information as MI
-from src.data_class import DataField, load_enso_index
-from src.surrogates import SurrogateField
+import pyclits.wavelet_analysis as wvlt
+import pyclits.mutual_information as MI
+from pyclits.geofield import DataField
+from pyclits.data_loaders import load_enso_index
+from pyclits.surrogates import SurrogateField
 from scipy import signal
 
 
-enso = load_enso_index("/Users/nikola/work-ui/data/nino34raw.txt", '3.4', date(1870, 1, 1), date(2016, 1, 1), anom = False)
-enso_first = load_enso_index("/Users/nikola/work-ui/data/nino34raw.txt", '3.4', date(1870, 1, 1), date(1943, 1, 1), anom = False)
-enso_second = load_enso_index("/Users/nikola/work-ui/data/nino34raw.txt", '3.4', date(1943, 1, 1), date(2016, 1, 1), anom = False)
+enso = load_enso_index("nino34raw.txt", '3.4', date(1870, 1, 1), date(2016, 1, 1), anom = False)
+enso_first = load_enso_index("nino34raw.txt", '3.4', date(1870, 1, 1), date(1943, 1, 1), anom = False)
+enso_second = load_enso_index("nino34raw.txt", '3.4', date(1943, 1, 1), date(2016, 1, 1), anom = False)
 
 WVLT_SPAN = [5, 96]
 scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)

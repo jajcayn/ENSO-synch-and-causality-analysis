@@ -1,9 +1,12 @@
+"""
+Plots figure with CMIP5 comparison.
+"""
+
+
 import csv
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import numpy as np
-
-
 
 with open("CMIP5-interactions.csv", 'r') as f:
     reader = csv.reader(f, delimiter = ',')
@@ -115,4 +118,4 @@ ax.set_xticklabels(['SYNCH - corr', 'SYNCH - ARI', 'PHcausality - corr', 'PHcaus
 plt.colorbar(cs, fraction = 0.15*0.15, pad = 0.08, ticks = np.arange(0, 0.3, 0.05))
 
 # plt.show()
-plt.savefig('CMIP5_model_ens_test.eps', bbox_inches = 'tight')
+plt.savefig('plots/CMIP5_model_ens_test.eps', bbox_inches = 'tight')

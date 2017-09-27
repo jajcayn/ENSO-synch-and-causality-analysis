@@ -1,3 +1,8 @@
+"""
+Evaluates CMIP5 NINO3.4 interactions in comparison with real data.
+"""
+
+
 import numpy as np
 import cPickle
 import csv

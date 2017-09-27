@@ -1,7 +1,6 @@
 *.pyc
 *.bin
 *.png
-*.txt
 *.dat
 CMIP5_NINO34/
 N34_CMIP5/
@@ -9,7 +8,7 @@ notebooks/
 plots/
 spectra/
 EMR/
+not-used/
 *.mat
 *.out
-*.csv
 *.eps

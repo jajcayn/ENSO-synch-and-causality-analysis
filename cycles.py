@@ -1,13 +1,17 @@
+"""
+This scripts does various conditional analyses.
+"""
+
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 
 from datetime import date, datetime
 # from matplotlib.ticker import MultipleLocator, FuncFormatter
-import sys
-sys.path.append('/Users/nikola/work-ui/multi-scale')
-sys.path.append('/home/nikola/Work/multi-scale')
-from src.data_class import DataField, load_enso_index, load_station_data, load_ERSST_data
+from pyclits.geofield import DataField
+from pyclits.data_loaders import load_enso_index
 import scipy.stats as sts
 import scipy.signal as ss
 
@@ -516,7 +520,7 @@ for b in range(3):
     # weights = np.ones_like(ac2[ndx])/float(len(ac2[ndx]))
     # plt.hist(ac2[ndx], weights = weights, bins = 30, align = 'left', alpha = 0.7, label = "24mon: %.3f$\pm$%.3f" % (np.mean(ac2[ndx]), np.std(ac2[ndx], ddof = 1)))
     # plt.legend(loc = 7, prop = {'size' : 9}, frameon = False)
-    plt.xlabel("PERIOD [1/year]", size = 16)
+    plt.xlabel("FREQUENCY [1/year]", size = 16)
     # plt.title(tits[b], size = 23)
     plt.gca().text(.8, 1., tits[b], horizontalalignment = 'right', verticalalignment = 'top', transform = plt.gca().transAxes, size = 24)
     plt.xlim([0.85, 1.15])

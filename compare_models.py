@@ -1,3 +1,7 @@
+"""
+Compares CMIP5 models with real NINO34 data.
+"""
+
 import numpy as np
 import cPickle
 import matplotlib

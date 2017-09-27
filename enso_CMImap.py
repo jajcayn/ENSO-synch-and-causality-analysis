@@ -1,3 +1,9 @@
+"""
+Computes MI/CMI analysis of NINO34 data.
+This is the main script
+"""
+
+
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -10,7 +16,7 @@ import sys
 import matplotlib.gridspec as gridspec
 import scipy.io as sio
 
-COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = True
 
@@ -36,18 +42,11 @@ def read_rossler(fname):
 
 
 if COMPUTE:
-    import platform
-    if platform.system() == "Linux":
-        sys.path.append('/home/nikola/Work/phd/multi-scale')
-        sys.path.append('/home/nikola/Work/multi-scale')
-        # sys.path.append('/home/hartman/Work/Projects/cmi-analysis')
-    elif platform.system() == "Darwin":
-        sys.path.append('/Users/nikola/work-ui/multi-scale')
-
-    import src.wavelet_analysis as wvlt
-    import src.mutual_information as MI
-    from src.data_class import DataField, load_enso_index
-    from src.surrogates import SurrogateField
+    import pyclits.wavelet_analysis as wvlt
+    import pyclits.mutual_information as MI
+    from pyclits.geofield import DataField
+    from pyclits.data_loaders import load_enso_index
+    from pyclits.surrogates import SurrogateField
     from multiprocessing import Process, Queue
     # import cmi_estimation as cme
 
@@ -210,9 +209,6 @@ if COMPUTE:
                 #prepare result matrices
                 # 1st PCA of spatial QBO
                 # qbo = np.loadtxt("/Users/nikola/work-ui/data/QBOspatial-2-PCA-jan1956-dec2015.txt")[:, 0]
-                k0 = 6. # wavenumber of Morlet wavelet used in analysis
-                # y = 12 # year in months
-                fourier_factor = (4 * np.pi) / (k0 + np.sqrt(2 + np.power(k0,2)))
                 scales = np.arange(WVLT_SPAN[0], WVLT_SPAN[-1] + 1, 1)
                 phase_phase_coherence = np.zeros((scales.shape[0], scales.shape[0]))
                 # phase_phase_coherence = np.zeros((scales.shape[0], 1))
@@ -231,15 +227,12 @@ if COMPUTE:
                 print enso.data.shape#, y_ts.shape
 
                 for i in range(phase_phase_coherence.shape[0]):
-                    sc_i = scales[i] / fourier_factor
-                    wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
-                    phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+                    enso.wavelet(period = scales[i], period_unit = 'm', cut = 1)
+                    phase_i = enso.phase.copy()
                     
                     for j in range(phase_phase_coherence.shape[1]):
-                        sc_j = scales[j] / fourier_factor
-                        # sc_j = 12 / fourier_factor
-                        wave, _, _, _ = wvlt.continous_wavelet(enso.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
-                        phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+                        enso.wavelet(period = scales[j], period_unit = 'm', cut = 1)
+                        phase_j = enso.phase.copy()
                         
                         # ###################
                         # # continuous phase
@@ -254,7 +247,7 @@ if COMPUTE:
                         #     phase_j[t] -= (ph0 + omega*t)
                         # ###################
 
-                        amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
+                        amp_j = enso.amplitude.copy()
 
                         phase_phase_coherence[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
                         phase_phase_coherence_knn[i, j] = MI.knn_mutual_information(phase_i, phase_j, k = 64, dualtree = True)
@@ -312,15 +305,12 @@ if COMPUTE:
                         sg.center_surr()
 
                         for i in range(coh.shape[0]):
-                            sc_i = sc[i] / fourier_factor
-                            wave, _, _, _ = wvlt.continous_wavelet(sg.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_i, j1 = 0, k0 = k0)
-                            phase_i = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+                            sg.wavelet(period = sc[i], period_unit = 'm', cut = 1)
+                            phase_i = sg.phase.copy()
                             
                             for j in range(coh.shape[1]):
-                                sc_j = sc[j] / fourier_factor
-                                # sc_j = 12 / fourier_factor
-                                wave, _, _, _ = wvlt.continous_wavelet(sg.data, 1, False, wvlt.morlet, dj = 0, s0 = sc_j, j1 = 0, k0 = k0)
-                                phase_j = np.arctan2(np.imag(wave), np.real(wave))[0, 12:-12]
+                                sg.wavelet(period = sc[j], period_unit = 'm', cut = 1)
+                                phase_j = sg.phase.copy()
 
                                 # ###################
                                 # # continuous phase
@@ -335,7 +325,7 @@ if COMPUTE:
                                 #     phase_j[t] -= (ph0 + omega*t)
                                 # ###################
 
-                                amp_j = np.sqrt(np.power(np.imag(wave), 2) + np.power(np.real(wave), 2))[0, 12:-12]
+                                amp_j = sg.amplitude.copy()
 
                                 coh[i, j] = MI.mutual_information(phase_i, phase_j, algorithm = 'EQQ2', bins = BINS)
                                 coh_knn[i, j] = MI.knn_mutual_information(phase_i, phase_j, k = 64, dualtree = True)
@@ -448,7 +438,7 @@ if COMPUTE:
 else:
     CMIP5models = ['linear-20PC-L3-seasonal']
     BINS = 4
-    PUB = True
+    PUB = False
     # WVLT_SPAN = [5,93]
     for CMIP5model in CMIP5models:
         # fname = CMIP5model + '.txt'
@@ -471,7 +461,7 @@ else:
             # fname = ("bins/python-model/Python-Nino34-%s_CMImap4bins3Dcond%d-against-basicERM.bin" % (CMIP5model, num_ts))
             # fname = ("bins/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.bin" % (num_ts))
             # fname = ("bins/Sergey-Nino34-ERM-linear-SST-20PC-L3-multiplicative-5mon-snippets_CMImap4bins3Dcond%d-against-basicERM.bin" % (num_ts))
-            fname = 'bins/PROneutral-CMImap4bins3Dcond_GaussCorr.bin'
+            fname = 'bins/nino34-CESMhigh.bin'
             CUT = slice(0,NUM_SURR)
             # version = 3
             if num_ts == 8:
@@ -539,7 +529,7 @@ else:
                     # plt.colorbar(cs)
                     ax.grid()
                     ax.set_ylabel("PERIOD %s [years]" % lab, size = 23)
-                plt.savefig('plots/PROneutral-KNN.eps', bbox_inches = "tight")
+                plt.savefig('plots/nino34-CESMhigh.eps', bbox_inches = "tight")
             else:
                 fig = plt.figure(figsize=(15,15))
                 gs = gridspec.GridSpec(2, 2)
@@ -573,7 +563,7 @@ else:
                 # plt.savefig("plots/DDEmodel-k%.1f-tau:%.3f-b:%.1f-against%dFT.png" % (CMIP5model[0], CMIP5model[1], CMIP5model[2], NUM_SURR))
                 # plt.savefig('plots/Nino%s-obs-vs-ExA-Sergey-reversed-comb-mode_CMImap4bins3Dcond-against-basicERM.png' % num_ts)
                 # plt.savefig('plots/pro_knn/kNN-PROdamped-3.75per_CMImap4bins3Dcond%d-FT.png' % num_ts)
-                plt.savefig('plots/PROneutral-KNN-100FT.png')
+                plt.savefig('plots/nino34-CESMhigh.png')
             # plt.savefig('PROdamped-CMImap.png')
         # plt.savefig('test.png')
 

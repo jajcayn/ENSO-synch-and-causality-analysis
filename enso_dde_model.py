@@ -1,5 +1,10 @@
+"""
+Implements DDE model of NINO34
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
+
 
 
 def enso_dde_model(kappa, tau, b, nyears = 120, subsample_to_monthly = False):
@@ -35,12 +40,5 @@ def enso_dde_model(kappa, tau, b, nyears = 120, subsample_to_monthly = False):
 
     return t, h
 
-
-# t, h = enso_dde_model(50., 0.42, 1., nyears = 120, subsample_to_monthly = False)
-
-# print h.shape
-
-# plt.plot(t, h)
-# plt.show()
 
 
