@@ -16,7 +16,7 @@ import sys
 import matplotlib.gridspec as gridspec
 import scipy.io as sio
 
-COMPUTE = False # if True, the map will be evaluated, if False, it will be drawn
+COMPUTE = True # if True, the map will be evaluated, if False, it will be drawn
 CMIP5model = None # None for data or name of the model + _ + number of TS as more time series is available
 use_PRO_model = True
 
@@ -43,7 +43,7 @@ def read_rossler(fname):
 
 if COMPUTE:
     import pyclits.wavelet_analysis as wvlt
-    import pyclits.mutual_information as MI
+    import pyclits.mutual_inf as MI
     from pyclits.geofield import DataField
     from pyclits.data_loaders import load_enso_index
     from pyclits.surrogates import SurrogateField
@@ -165,7 +165,8 @@ def phase_diff(ph1, ph2):
 
     return ph
 
-WVLT_SPAN = [5,96] # unit is month, 96
+
+WVLT_SPAN = [5, 96]  # unit is month, 96
 NUM_SURR = 100
 WRKRS = 20
 # BINS = 4
