@@ -4,6 +4,7 @@ Main script for computing CMI on single timeseries.
 
 import cPickle
 from datetime import datetime
+from itertools import product
 from multiprocessing import Process, Queue
 
 import numpy as np
@@ -34,12 +35,33 @@ FIRST_DATE = '1900-01-01'
 SAVING_FILENAME = 'bins/tas_Amon_MPI-ESM-HR'
 
 
-class ResultsContainer:
+class Result:
     """
-    Simple class for results container.
+    Result class.
     """
-    RESULT_ORDER = ['ph_ph_mi', 'ph_amp_mi', 'ph_ph_caus', 'ph_amp_caus']
+    RESULT_TYPES = ['ph_ph_mi', 'ph_amp_mi', 'ph_ph_caus', 'ph_amp_caus']
 
+    def __init__(self, array, metric, algorithm):
+        assert metric in self.RESULT_TYPES, 'Wrong metric: %s' % metric
+        assert isinstance(array, np.ndarray)
+
+        self.result = array
+        self.metric = metric
+        self.algorithm = algorithm
+
+    @property
+    def key(self):
+        return "%s_%s" % (self.metric, self.algorithm)
+
+    def __str__(self):
+        return "Contains %s result with %s algorithm of shape: %s" % (
+            self.metric, self.algorithm, str(self.result.shape))
+
+
+class ResultsContainer(Result):
+    """
+    Collection of Results.
+    """
     @staticmethod
     def validate_single_result(result):
         """
@@ -55,53 +77,84 @@ class ResultsContainer:
                 assert isinstance(value, np.ndarray)
 
     @classmethod
+    def from_algorithm_output(cls, results_list):
+        cls.validate_single_result(results_list)
+        output = []
+        for result, metric in zip(results_list, cls.RESULT_TYPES):
+            for algorithm in result:
+                output.append(Result(
+                    result[algorithm],
+                    metric=metric,
+                    algorithm=algorithm))
+
+        return cls(output)
+
+    @classmethod
     def from_saved_file(cls, filename):
-        """
-        Load from saved file.
-        """
-        pass
+        print('Loading from %s...' % filename)
+        with open(filename, "rb") as f:
+            raw_data = cPickle.load(f)
 
-    def __init__(self, results, surrogates=False):
-        """
-        :results: list of results, order: phase-phase MI, phase-amp MI,
-            phase-phase causality, and phase-amp causality
-        """
-        if not surrogates:
-            self.validate_single_result(results)
-        else:
-            print("Found %d surrogate results" % len(results))
-            for surrogate_result in results:
-                self.validate_single_result(surrogate_result)
+        def get_metric_algorithm(key):
+            for metric in cls.RESULT_TYPES:
+                if metric in key:
+                    algorithm = key.replace("%s_" % metric, "")
+                    return metric, algorithm
 
-        self.surrogates = surrogates
+        results = []
+        for key, array in raw_data.iteritems():
+            metric, algorithm = get_metric_algorithm(key)
+            results.append(Result(array, metric=metric, algorithm=algorithm))
+        return cls(results)
+
+    def __init__(self, results):
+        assert all(isinstance(result, Result) for result in results)
         self.results = results
 
+    def __getitem__(self, key):
+        metric, algo = key
+        for result in self.results:
+            if result.metric == metric and result.algorithm == algo:
+                return result.result
+
     def save(self, filename):
-        """
-        Save results to file.
-        """
-        saving_dict = {}
-        if not self.surrogates:
-            for result_str, result in zip(self.RESULT_ORDER, self.results):
-                for key, value in result.iteritems():
-                    saving_dict[result_str + "_" + key] = value
-
-        else:
-            for single_result in self.results:
-                for result_str, result in zip(self.RESULT_ORDER,
-                                              single_result):
-                    for key, value in result.iteritems():
-                        full_key = result_str + "_" + key
-                        # we already have something, so stack
-                        if full_key in saving_dict:
-                            saving_dict[full_key] = np.dstack(
-                                [saving_dict[full_key], value])
-                        else:
-                            saving_dict[full_key] = value
-
+        saving_dict = {
+            result.key: result.result for result in self.results
+        }
         with open(filename, "wb") as f:
             cPickle.dump(saving_dict, f, protocol=cPickle.HIGHEST_PROTOCOL)
         print('Saving done to %s' % filename)
+
+
+class SurrogatesContainer(ResultsContainer):
+    """
+    Results from surrogates.
+    """
+    @classmethod
+    def from_algorithm_output(cls, results_list):
+        output = []
+        for single_result in results_list:
+            pass
+        #     cls.validate_single_result(single_result)
+        #     for result, metric in zip(results_list, cls.RESULT_TYPES):
+        #         for algorithm in single_result:
+        #             output.append(Result(
+        #                 result[algorithm],
+        #                 metric=metric,
+        #                 algorithm=algorithm))
+
+        # return cls(output)
+            # for result, metric in zip(single_result, cls.RESULT_TYPES):
+            # for result_str, result in zip(self.RESULT_ORDER,
+            #                                   single_result):
+            #         for key, value in result.iteritems():
+            #             full_key = result_str + "_" + key
+            #             # we already have something, so stack
+            #             if full_key in saving_dict:
+            #                 saving_dict[full_key] = np.dstack(
+            #                     [saving_dict[full_key], value])
+            #             else:
+            #                 saving_dict[full_key] = value
 
 
 def prepare_dataset(dataset_path, nino_region=None, surrogates=True):
@@ -243,7 +296,7 @@ def main():
     print("Starting computing for data...")
     data_results = compute_information_measures(timeseries, scales)
     print("Data done!")
-    data_results = ResultsContainer(results=data_results, surrogates=False)
+    data_results = ResultsContainer.from_algorithm_output(results=data_results)
     data_results.save(filename=SAVING_FILENAME + '_data.bin')
 
     # compute for surrogates
