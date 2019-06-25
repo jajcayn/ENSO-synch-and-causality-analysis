@@ -91,8 +91,8 @@ def compute_causality(timeseries1, timeseries2, tau_max, algorithm,
     results_knn = []
     for tau in range(1, tau_max):
         x, y, z = mutual.get_time_series_condition(
-            [timeseries1, timeseries2], tau=tau, dim_condition=dim_condition,
-            eta=eta, phase_diff=phase_diff)
+            [timeseries1, timeseries2], tau=tau,
+            dim_of_condition=dim_condition, eta=eta, phase_diff=phase_diff)
 
         results_simple.append(mutual.cond_mutual_information(
             x, y, z, algorithm=algorithm, bins=NUM_BINS_EQQ))
