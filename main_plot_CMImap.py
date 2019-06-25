@@ -4,7 +4,7 @@ Main script for ploting CMI maps.
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
-from main_compute_CMImap import PERIODS_SPAN, SAVING_FILENAME
+from main_compute_CMImap import PERIODS_BIN, PERIODS_SPAN, SAVING_FILENAME
 from matplotlib.ticker import FuncFormatter, MultipleLocator
 from tools import ResultsContainer, SurrogatesContainer
 
@@ -39,7 +39,7 @@ def main():
         filename=SAVING_FILENAME + '_surrogates.bin')
 
     # plot
-    scales = np.arange(PERIODS_SPAN[0], PERIODS_SPAN[-1] + 1, 1)
+    scales = np.arange(PERIODS_SPAN[0], PERIODS_SPAN[-1] + 1, PERIODS_BIN)
     x, y = np.meshgrid(scales, scales)
 
     plt.figure(figsize=(15, 15))

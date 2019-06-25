@@ -1,7 +1,7 @@
 """
 Main script for computing CMI on single timeseries.
 """
-from datetime import datetime
+from datetime import date, datetime
 from multiprocessing import Process, Queue
 
 import numpy as np
@@ -12,7 +12,8 @@ from pyclits.surrogates import SurrogateField
 from tools import ResultsContainer, SurrogatesContainer
 from tqdm import tqdm
 
-PERIODS_SPAN = [5, 96]  # unit is month, 96
+PERIODS_SPAN = [6, 240]  # unit is month, 96
+PERIODS_BIN = 6  # in months
 NUM_SURROGATES = 100
 WORKERS = 20
 NUM_BINS_EQQ = 4
@@ -26,9 +27,9 @@ NINO_INDEX_BOUNDS = {
 }
 
 # TO BE CHANGED
-DATASET_PATH = 'new_data_may19/tas_Amon_MPI-ESM-HR_historical_all_in_one_1880_1999_1.nc'
+DATASET_PATH = 'new_data_may19/nino34.txt'
 DATASET_VARIABLE = 'tas'
-FIRST_DATE = '1900-01-01'
+FIRST_DATE = '1870-01-01'
 
 SAVING_FILENAME = 'bins/tas_Amon_MPI-ESM-HR'
 
@@ -41,22 +42,33 @@ def prepare_dataset(dataset_path, nino_region=None, surrogates=True):
     :nino_region: which nino region to use, if None, will not select data
     :surrogates: whether surrogates will be computed
     """
-    dataset = xr.open_dataset(DATASET_PATH)
-    variable = dataset[DATASET_VARIABLE]
-    assert variable.ndim == 3, (
-        'Currently supports only geospatial lat-lon datasets')
-    # cut NINO region
-    if nino_region is not None:
-        variable = variable.sel(**NINO_INDEX_BOUNDS[nino_region])
-    variable.sel(time=slice(FIRST_DATE, None))
-    # do spatial mean
-    variable = variable.mean(dim=["lat", "lon"])
-    assert variable.ndim == 1, "Now the dataset should be 1dimensional"
+    if dataset_path.endswith('.nc'):
+        dataset = xr.open_dataset(dataset_path)
+        variable = dataset[DATASET_VARIABLE]
+        assert variable.ndim == 3, (
+            'Currently supports only geospatial lat-lon datasets')
+        # cut NINO region
+        if nino_region is not None:
+            variable = variable.sel(**NINO_INDEX_BOUNDS[nino_region])
+        variable.sel(time=slice(FIRST_DATE, None))
+        # do spatial mean
+        variable = variable.mean(dim=["lat", "lon"])
+        assert variable.ndim == 1, "Now the dataset should be 1dimensional"
+        timeseries = DataField(data=variable.values)
+
+    elif dataset_path.endswith('.txt'):
+        dataset = np.loadtxt(dataset_path, skiprows=1)
+        assert dataset.shape[1] == 13
+        variable = dataset[:, 1:].reshape(-1)
+        timeseries = DataField(data=variable)
+    else:
+        raise ValueError('Unsupported dataset type: %s' % dataset_path)
 
     # cast datasat to DataField
-    timeseries = DataField(data=variable.values)
     timeseries.create_time_array(
         date_from=datetime.strptime(FIRST_DATE, "%Y-%m-%d"), sampling='m')
+    # assert dates as per npj paper
+    timeseries.select_date(date(1900, 1, 1), date(2010, 1, 1))
 
     # prepare for surrogate creation
     if surrogates:
@@ -166,7 +178,7 @@ def main():
         DATASET_PATH, "NINO3.4")
     timeseries.center_data()
     # get scales for computation
-    scales = np.arange(PERIODS_SPAN[0], PERIODS_SPAN[-1] + 1, 1)
+    scales = np.arange(PERIODS_SPAN[0], PERIODS_SPAN[-1] + 1, PERIODS_BIN)
 
     # compute for data
     print("Starting computing for data...")
