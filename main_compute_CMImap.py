@@ -31,7 +31,7 @@ DATASET_PATH = 'new_data_may19/nino34.txt'
 DATASET_VARIABLE = 'tas'
 FIRST_DATE = '1870-01-01'
 
-SAVING_FILENAME = 'bins/tas_Amon_MPI-ESM-HR'
+SAVING_FILENAME = 'bins/nino34_6-240months'
 
 
 def prepare_dataset(dataset_path, nino_region=None, surrogates=True):
