@@ -1,10 +1,7 @@
 """
 Main script for computing CMI on single timeseries.
 """
-
-import cPickle
 from datetime import datetime
-from itertools import product
 from multiprocessing import Process, Queue
 
 import numpy as np
@@ -12,6 +9,7 @@ import pyclits.mutual_inf as mutual
 import xarray as xr
 from pyclits.geofield import DataField
 from pyclits.surrogates import SurrogateField
+from tools import ResultsContainer, SurrogatesContainer
 from tqdm import tqdm
 
 PERIODS_SPAN = [5, 96]  # unit is month, 96
@@ -33,128 +31,6 @@ DATASET_VARIABLE = 'tas'
 FIRST_DATE = '1900-01-01'
 
 SAVING_FILENAME = 'bins/tas_Amon_MPI-ESM-HR'
-
-
-class Result:
-    """
-    Result class.
-    """
-    RESULT_TYPES = ['ph_ph_mi', 'ph_amp_mi', 'ph_ph_caus', 'ph_amp_caus']
-
-    def __init__(self, array, metric, algorithm):
-        assert metric in self.RESULT_TYPES, 'Wrong metric: %s' % metric
-        assert isinstance(array, np.ndarray)
-
-        self.result = array
-        self.metric = metric
-        self.algorithm = algorithm
-
-    @property
-    def key(self):
-        return "%s_%s" % (self.metric, self.algorithm)
-
-    def __str__(self):
-        return "Contains %s result with %s algorithm of shape: %s" % (
-            self.metric, self.algorithm, str(self.result.shape))
-
-
-class ResultsContainer(Result):
-    """
-    Collection of Results.
-    """
-    @staticmethod
-    def validate_single_result(result):
-        """
-        Validate single result.
-        """
-        assert isinstance(result, (list, tuple)), (
-            'Wrong type: %s' % type(result))
-        assert len(result) == 4, ('Wrong length: %s' % len(result))
-        for single_result in result:
-            assert isinstance(single_result, dict)
-            assert len(list(single_result.keys())) == 2
-            for key, value in single_result.iteritems():
-                assert isinstance(value, np.ndarray)
-
-    @classmethod
-    def from_algorithm_output(cls, results_list):
-        cls.validate_single_result(results_list)
-        output = []
-        for result, metric in zip(results_list, cls.RESULT_TYPES):
-            for algorithm in result:
-                output.append(Result(
-                    result[algorithm],
-                    metric=metric,
-                    algorithm=algorithm))
-
-        return cls(output)
-
-    @classmethod
-    def from_saved_file(cls, filename):
-        print('Loading from %s...' % filename)
-        with open(filename, "rb") as f:
-            raw_data = cPickle.load(f)
-
-        def get_metric_algorithm(key):
-            for metric in cls.RESULT_TYPES:
-                if metric in key:
-                    algorithm = key.replace("%s_" % metric, "")
-                    return metric, algorithm
-
-        results = []
-        for key, array in raw_data.iteritems():
-            metric, algorithm = get_metric_algorithm(key)
-            results.append(Result(array, metric=metric, algorithm=algorithm))
-        return cls(results)
-
-    def __init__(self, results):
-        assert all(isinstance(result, Result) for result in results)
-        self.results = results
-
-    def __getitem__(self, key):
-        metric, algo = key
-        for result in self.results:
-            if result.metric == metric and result.algorithm == algo:
-                return result.result
-
-    def save(self, filename):
-        saving_dict = {
-            result.key: result.result for result in self.results
-        }
-        with open(filename, "wb") as f:
-            cPickle.dump(saving_dict, f, protocol=cPickle.HIGHEST_PROTOCOL)
-        print('Saving done to %s' % filename)
-
-
-class SurrogatesContainer(ResultsContainer):
-    """
-    Results from surrogates.
-    """
-    @classmethod
-    def from_algorithm_output(cls, results_list):
-        output = []
-        for single_result in results_list:
-            pass
-        #     cls.validate_single_result(single_result)
-        #     for result, metric in zip(results_list, cls.RESULT_TYPES):
-        #         for algorithm in single_result:
-        #             output.append(Result(
-        #                 result[algorithm],
-        #                 metric=metric,
-        #                 algorithm=algorithm))
-
-        # return cls(output)
-            # for result, metric in zip(single_result, cls.RESULT_TYPES):
-            # for result_str, result in zip(self.RESULT_ORDER,
-            #                                   single_result):
-            #         for key, value in result.iteritems():
-            #             full_key = result_str + "_" + key
-            #             # we already have something, so stack
-            #             if full_key in saving_dict:
-            #                 saving_dict[full_key] = np.dstack(
-            #                     [saving_dict[full_key], value])
-            #             else:
-            #                 saving_dict[full_key] = value
 
 
 def prepare_dataset(dataset_path, nino_region=None, surrogates=True):
@@ -328,8 +204,8 @@ def main():
     for worker in workers:
         worker.join()
     print("Surrogates done.")
-    surrogate_result = ResultsContainer(
-        results=all_surrogates_results, surrogates=True)
+    surrogate_result = SurrogatesContainer.from_algorithm_output(
+        all_surrogates_results)
     surrogate_result.save(filename=SAVING_FILENAME + '_surrogates.bin')
 
 

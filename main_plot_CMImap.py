@@ -4,9 +4,9 @@ Main script for ploting CMI maps.
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
-from main_compute_CMImap import (PERIODS_SPAN, SAVING_FILENAME,
-                                 ResultsContainer, SurrogatesContainer)
+from main_compute_CMImap import PERIODS_SPAN, SAVING_FILENAME
 from matplotlib.ticker import FuncFormatter, MultipleLocator
+from tools import ResultsContainer, SurrogatesContainer
 
 TITLES = ['PHASE SYNCHRONIZATION', 'PHASE-PHASE CAUSALITY', 'PHASE x AMP MI',
           'PHASE-AMP CAUSALITY']
