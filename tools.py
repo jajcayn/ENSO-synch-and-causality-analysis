@@ -123,4 +123,4 @@ class SurrogatesContainer(ResultsContainer):
             metric, algorithm = key.split("_")
             output.append(Result(array, metric=metric, algorithm=algorithm))
 
-    return cls(output)
+        return cls(output)
