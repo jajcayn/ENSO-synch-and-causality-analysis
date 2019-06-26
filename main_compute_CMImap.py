@@ -184,7 +184,7 @@ def main():
     print("Starting computing for data...")
     data_results = compute_information_measures(timeseries, scales)
     print("Data done!")
-    data_results = ResultsContainer.from_algorithm_output(results=data_results)
+    data_results = ResultsContainer.from_algorithm_output(data_results)
     data_results.save(filename=SAVING_FILENAME + '_data.bin')
 
     # compute for surrogates
