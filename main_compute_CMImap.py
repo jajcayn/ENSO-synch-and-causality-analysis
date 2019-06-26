@@ -13,7 +13,7 @@ from tools import ResultsContainer, SurrogatesContainer
 from tqdm import tqdm
 
 PERIODS_SPAN = [6, 240]  # unit is month, 96
-PERIODS_BIN = 6  # in months
+PERIODS_BIN = 3  # in months
 NUM_SURROGATES = 100
 WORKERS = 20
 NUM_BINS_EQQ = 4
