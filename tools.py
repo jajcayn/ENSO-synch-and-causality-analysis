@@ -109,7 +109,7 @@ class SurrogatesContainer(ResultsContainer):
             cls.validate_single_result(single_result)
             for result, metric in zip(single_result, cls.RESULT_TYPES):
                 for algorithm in result:
-                    key = "%s_%s" % (metric, algorithm)
+                    key = "%s_%s" % (metric.replace("_", "-"), algorithm)
                     # if we have the key, stack results
                     if key in output_dict:
                         output_dict[key] = np.dstack([output_dict[key],
@@ -121,6 +121,7 @@ class SurrogatesContainer(ResultsContainer):
         output = []
         for key, array in output_dict.iteritems():
             metric, algorithm = key.split("_")
-            output.append(Result(array, metric=metric, algorithm=algorithm))
+            output.append(Result(array, metric=metric.replace("-", "_"),
+                                 algorithm=algorithm))
 
         return cls(output)
