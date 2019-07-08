@@ -11,7 +11,7 @@ from tools import ResultsContainer, SurrogatesContainer
 TITLES = ['PHASE SYNCHRONIZATION', 'PHASE-PHASE CAUSALITY', 'PHASE x AMP MI',
           'PHASE-AMP CAUSALITY']
 LABELS = ['PHASE', 'PHASE', 'AMP', 'AMP']
-ALGORITHM = 'knn'
+ALGORITHM = 'eqq'
 
 
 def get_p_values(data_result, surrogate_result):
@@ -69,7 +69,7 @@ def main():
         ax.grid()
         ax.set_ylabel("PERIOD %s [years]" % lab, size=23)
 
-    plt.savefig("new_plots/tas_Amon_MPI-ESM-HR_%s.png" % ALGORITHM,
+    plt.savefig("new_plots/nino34_6-240months_%s.png" % ALGORITHM,
                 bbox_inches="tight")
 
 
